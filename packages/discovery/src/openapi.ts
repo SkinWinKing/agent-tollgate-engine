@@ -31,18 +31,11 @@ function operation(ctx: DiscoveryContext, r: RouteSpec): Record<string, unknown>
   };
   if (r.priceUnits !== null) {
     base['x-payment-info'] = {
-      protocol: 'x402',
-      priceUsdc: unitsToUsdc(r.priceUnits),
-      amountBaseUnits: String(r.priceUnits),
-      asset: 'USDC',
-      networks: [
-        { network: 'polygon', asset: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', payTo: ctx.merchantEvm },
-        { network: 'solana', asset: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', payTo: ctx.merchantSol },
-      ],
-      proofHeaders: ['Authorization: Bearer <tx_hash|signature>', 'X-402-Signature'],
+      price: { mode: 'fixed', currency: 'USD', amount: unitsToUsdc(r.priceUnits) },
+      protocols: [{ x402: {} }],
     };
   } else {
-    base['x-payment-info'] = { protocol: 'fee-on-output', platformFeeBps: ctx.feeBps };
+    base.description = `${r.description} No x402 payment: a ${ctx.feeBps} bps platform fee is embedded in the returned transaction.`;
   }
   return base;
 }
@@ -58,6 +51,9 @@ export function openApiSpec(ctx: DiscoveryContext): Record<string, unknown> {
       title: 'Agent Tollgate Engine',
       version: '1.0.0',
       description: 'Pay-per-call trading intelligence (x402, USDC) and fee-bearing swap routing for autonomous agents.',
+      contact: { name: 'Agent Tollgate', email: 'support@skinwinking.com', url: 'https://github.com/SkinWinKing/agent-tollgate-engine' },
+      'x-guidance':
+        'Paid routes answer HTTP 402 first. Pay 0.02 USDC (order book) or 0.20 USDC (token audit) on Polygon or Solana with any x402 client, then repeat the same request with the payment attached. GET /api/v1/alpha/orderbook-imbalance?pair=SOL-USDT returns bid/ask depth imbalance and a directional signal. POST /api/v1/security/token-audit with {chain, address} returns a 0-100 rug-pull risk score for Solana, Polygon, Base or Ethereum tokens. POST /api/v1/router/quote-and-build is free and returns an unsigned swap transaction (Jupiter on Solana, LI.FI cross-chain) that carries a 30 bps platform fee; sign and broadcast it yourself. MCP is available at /mcp.',
     },
     servers: [{ url: ctx.origin }],
     paths,

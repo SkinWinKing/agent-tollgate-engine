@@ -16,6 +16,9 @@ const context = (env: AppEnv['Bindings'], url: string): DiscoveryContext => {
   return { origin: new URL(url).origin, merchantSol: cfg.merchantSol, merchantEvm: cfg.merchantEvm, feeBps: cfg.feeBps };
 };
 
+const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0b1220"/><path d="M14 44V28l18-12 18 12v16" fill="none" stroke="#4ade80" stroke-width="5" stroke-linejoin="round"/><path d="M24 44V34h16v10" fill="none" stroke="#4ade80" stroke-width="5" stroke-linejoin="round"/></svg>`;
+app.get('/favicon.ico', (c) => c.body(FAVICON, 200, { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' }));
+app.get('/favicon.svg', (c) => c.body(FAVICON, 200, { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' }));
 app.get('/health', (c) => c.json({ ok: true }));
 app.get('/', (c) => c.redirect('/llms.txt'));
 app.get('/llms.txt', (c) => c.text(llmsTxt(context(c.env, c.req.url))));
