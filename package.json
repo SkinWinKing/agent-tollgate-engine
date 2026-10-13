@@ -3,7 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "wrangler dev --var SIM_SECRET:dev-simulation-secret",
     "deploy": "wrangler deploy",
@@ -17,5 +19,8 @@
     "tsx": "^4.20.0",
     "typescript": "^5.9.0",
     "wrangler": "^4.150.0"
+  },
+  "dependencies": {
+    "@x402/svm": "^2.28.0"
   }
 }
