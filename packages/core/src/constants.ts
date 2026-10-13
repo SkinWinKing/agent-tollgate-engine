@@ -22,3 +22,8 @@ export function unitsToUsdc(units: number): string {
 
 export const CAIP_POLYGON = 'eip155:137';
 export const CAIP_SOLANA = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
+
+export const BASE_CHAIN_ID = 8453;
+export const USDC_BASE = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+export const CAIP_BASE = 'eip155:8453';
+export const DEFAULT_BASE_RPC = 'https://base-rpc.publicnode.com';

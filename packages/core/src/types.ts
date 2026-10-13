@@ -1,4 +1,4 @@
-export type PaymentNetwork = 'polygon' | 'solana';
+export type PaymentNetwork = 'polygon' | 'base' | 'solana';
 
 export interface CoreConfig {
   merchantSol: string;
@@ -7,6 +7,8 @@ export interface CoreConfig {
   evmRpcUrl: string;
   evmChainId: number;
   evmNetwork: 'polygon';
+  baseRpcUrl: string;
+  usdcBase: string;
   usdcEvm: string;
   usdcSol: string;
   minConfirmations: number;

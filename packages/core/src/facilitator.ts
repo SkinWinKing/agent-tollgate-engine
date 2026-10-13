@@ -32,6 +32,8 @@ export async function facilitatorSolanaFeePayer(cfg: CoreConfig): Promise<string
   }
 }
 
+const v2Network = (caip: string): 'polygon' | 'base' | 'solana' => (caip.startsWith('solana') ? 'solana' : caip === 'eip155:8453' ? 'base' : 'polygon');
+
 function decodePayload(header: string): PaymentPayload | null {
   try {
     const json = new TextDecoder().decode(Uint8Array.from(atob(header), (c) => c.charCodeAt(0)));
@@ -86,7 +88,7 @@ export async function verifyViaFacilitator(
     const settle = (await settleRes.json()) as { success: boolean; errorReason?: string; transaction?: string; payer?: string; network?: string };
     if (!settle.success || !settle.transaction) return fail(settle.errorReason ?? 'SETTLEMENT_FAILED', false);
     const nonce = paymentPayload.payload?.authorization?.nonce ?? settle.transaction;
-    const network = 'amount' in requirement ? (requirement.network.startsWith('solana') ? 'solana' : 'polygon') : requirement.network;
+    const network = 'amount' in requirement ? v2Network(requirement.network) : requirement.network;
     return {
       result: {
         ok: true,

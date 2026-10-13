@@ -1,5 +1,5 @@
-import { CAIP_POLYGON, CAIP_SOLANA, EVM_TX_HASH, SOLANA_SIGNATURE, USDC_DECIMALS } from './constants';
-import { verifyEvmPayment } from './evm-verifier';
+import { CAIP_BASE, CAIP_POLYGON, CAIP_SOLANA, EVM_TX_HASH, SOLANA_SIGNATURE, USDC_DECIMALS } from './constants';
+import { evmChains, verifyEvmPayment } from './evm-verifier';
 import { verifyViaFacilitator } from './facilitator';
 import { VerifyResultFail } from './internal';
 import { verifySimulationReceipt } from './sim-verifier';
@@ -34,6 +34,7 @@ export function buildRequirements(cfg: CoreConfig, route: RouteSpec, resource: s
   const evmExtra = { name: 'USD Coin', version: '2', decimals: USDC_DECIMALS, chainId: cfg.evmChainId };
   const v1 = [
     { ...v1Base, network: 'polygon' as const, payTo: cfg.merchantEvm, asset: cfg.usdcEvm, extra: evmExtra },
+    { ...v1Base, network: 'base' as const, payTo: cfg.merchantEvm, asset: cfg.usdcBase, extra: { ...evmExtra, chainId: 8453 } },
     {
       ...v1Base,
       network: 'solana' as const,
@@ -44,6 +45,7 @@ export function buildRequirements(cfg: CoreConfig, route: RouteSpec, resource: s
   ];
   const v2Base = { scheme: 'exact' as const, amount, maxTimeoutSeconds: cfg.maxAgeSec };
   const v2 = [
+    { ...v2Base, network: CAIP_BASE, payTo: cfg.merchantEvm, asset: cfg.usdcBase, extra: { name: 'USD Coin', version: '2' } },
     { ...v2Base, network: CAIP_POLYGON, payTo: cfg.merchantEvm, asset: cfg.usdcEvm, extra: { name: 'USD Coin', version: '2' } },
     ...(solanaFeePayer
       ? [{ ...v2Base, network: CAIP_SOLANA, payTo: cfg.merchantSol, asset: cfg.usdcSol, extra: { feePayer: solanaFeePayer } }]
@@ -65,9 +67,15 @@ export async function verifyPayment(
   let extensionResponses: string | null = null;
   try {
     switch (proof.kind) {
-      case 'evm-tx':
-        result = await verifyEvmPayment(cfg, proof.hash, price);
+      case 'evm-tx': {
+        let last: VerifyResult = VerifyResultFail('TX_NOT_FOUND_OR_PENDING', true);
+        for (const chain of evmChains(cfg)) {
+          last = await verifyEvmPayment(cfg, chain, proof.hash, price).catch(() => VerifyResultFail('RPC_UNAVAILABLE', true));
+          if (last.ok || last.reason !== 'TX_NOT_FOUND_OR_PENDING') break;
+        }
+        result = last;
         break;
+      }
       case 'solana-tx':
         result = await verifySolanaPayment(cfg, proof.signature, price);
         break;

@@ -31,6 +31,7 @@ export function llmsTxt(ctx: DiscoveryContext): string {
 4. Each transaction proves exactly one request. Reuse returns 402 PAYMENT_ALREADY_USED. Transfers older than 15 minutes are rejected.
 
 Accepted networks and recipients:
+- base: USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 -> ${ctx.merchantEvm}
 - polygon: USDC 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359 -> ${ctx.merchantEvm}
 - solana: USDC EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v -> ${ctx.merchantSol}
 

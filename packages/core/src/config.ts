@@ -1,9 +1,11 @@
 import {
+  DEFAULT_BASE_RPC,
   DEFAULT_EVM_RPC,
   DEFAULT_SOLANA_RPC,
   EVM_ADDRESS,
   POLYGON_CHAIN_ID,
   SOLANA_ADDRESS,
+  USDC_BASE,
   USDC_POLYGON,
   USDC_SOLANA,
 } from './constants';
@@ -38,6 +40,8 @@ export function loadConfig(env: RawEnv): CoreConfig {
     evmRpcUrl: str(env, 'EVM_RPC_URL') ?? DEFAULT_EVM_RPC,
     evmChainId: POLYGON_CHAIN_ID,
     evmNetwork: 'polygon',
+    baseRpcUrl: str(env, 'BASE_RPC_URL') ?? DEFAULT_BASE_RPC,
+    usdcBase: USDC_BASE,
     usdcEvm: USDC_POLYGON,
     usdcSol: USDC_SOLANA,
     minConfirmations: int(env, 'EVM_MIN_CONFIRMATIONS', 3),

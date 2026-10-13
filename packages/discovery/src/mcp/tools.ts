@@ -18,7 +18,7 @@ const proofProperty = {
   paymentProof: {
     type: 'string',
     description:
-      'Payment proof: Polygon USDC tx hash (0x...) or Solana tx signature. Omit on the first call to receive the 402 payment instructions, pay, then call again with the proof.',
+      'Payment proof: USDC tx hash on Polygon or Base (0x...) or Solana tx signature. Omit on the first call to receive the 402 payment instructions, pay, then call again with the proof.',
   },
 };
 
