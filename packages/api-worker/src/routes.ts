@@ -9,6 +9,19 @@ import { x402PaymentGate } from './x402';
 
 export const routes = new Hono<AppEnv>();
 
+const QUOTE_LIMIT_PER_MINUTE = 30;
+
+routes.use(ROUTES.quote.path, async (c, next) => {
+  const ip = c.req.header('cf-connecting-ip') ?? 'unknown';
+  const stub = c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global'));
+  const bucket = Math.floor(Date.now() / 60_000);
+  if (!(await stub.hit(`rl:quote:${ip}:${bucket}`, QUOTE_LIMIT_PER_MINUTE, 120))) {
+    c.header('Retry-After', '60');
+    return c.json({ error: 'RATE_LIMITED', message: `Limit is ${QUOTE_LIMIT_PER_MINUTE} requests per minute per IP` }, 429);
+  }
+  await next();
+});
+
 routes.use(ROUTES.orderbook.path, x402PaymentGate(ROUTES.orderbook));
 routes.use(ROUTES.tokenAudit.path, x402PaymentGate(ROUTES.tokenAudit));
 
