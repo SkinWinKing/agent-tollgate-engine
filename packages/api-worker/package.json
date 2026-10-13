@@ -1,0 +1,2 @@
+{ "name": "@tollgate/api-worker", "version": "1.0.0", "private": true, "type": "module", "main": "src/index.ts",
+  "dependencies": { "@tollgate/core": "*", "@tollgate/omni-router": "*", "@tollgate/discovery": "*", "hono": "^4.13.0" } }

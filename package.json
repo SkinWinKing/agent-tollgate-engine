@@ -1,0 +1,21 @@
+{
+  "name": "agent-tollgate-engine",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev": "wrangler dev --var SIM_SECRET:dev-simulation-secret",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "simulate": "tsx packages/simulation-agent/scripts/run-e2e-simulation.ts",
+    "mcp": "tsx packages/discovery/src/mcp/stdio.ts"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261006.1",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "wrangler": "^4.150.0"
+  }
+}

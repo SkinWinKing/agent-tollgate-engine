@@ -1,0 +1,24 @@
+export const USDC_DECIMALS = 6;
+export const USDC_POLYGON = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
+export const USDC_SOLANA = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+export const POLYGON_CHAIN_ID = 137;
+export const ERC20_TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+export const DEFAULT_SOLANA_RPC = 'https://api.mainnet-beta.solana.com';
+export const DEFAULT_EVM_RPC = 'https://polygon-bor-rpc.publicnode.com';
+export const SOLANA_CAIP_CHAIN_ID = 1151111101161;
+
+export const EVM_TX_HASH = /^0x[0-9a-fA-F]{64}$/;
+export const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
+export const SOLANA_ADDRESS = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+export const SOLANA_SIGNATURE = /^[1-9A-HJ-NP-Za-km-z]{80,90}$/;
+
+export function usdcToUnits(usdc: number): number {
+  return Math.round(usdc * 10 ** USDC_DECIMALS);
+}
+
+export function unitsToUsdc(units: number): string {
+  return (units / 10 ** USDC_DECIMALS).toFixed(USDC_DECIMALS).replace(/0+$/, '').replace(/\.$/, '.0');
+}
+
+export const CAIP_POLYGON = 'eip155:137';
+export const CAIP_SOLANA = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';

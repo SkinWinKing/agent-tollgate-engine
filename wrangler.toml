@@ -1,0 +1,22 @@
+name = "agent-tollgate-engine"
+main = "packages/api-worker/src/index.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+MERCHANT_PAYOUT_ADDRESS_SOL = "DSvMhichkVACpR89fmuN2m1UZry8AgNb1QXFZetmDmT1"
+MERCHANT_PAYOUT_ADDRESS_EVM = "0x64f0117D37DDf366405747D7f9520851907fd077"
+PLATFORM_FEE_BPS = "30"
+EVM_MIN_CONFIRMATIONS = "3"
+PAYMENT_MAX_AGE_SEC = "900"
+X402_FACILITATOR_URL = "https://facilitator.payai.network"
+LIFI_INTEGRATOR = "agent-tollgate"
+JITO_TIP_LAMPORTS = "100000"
+
+[[durable_objects.bindings]]
+name = "NONCE_STORE"
+class_name = "NonceStore"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["NonceStore"]

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "com.skinwinking/agent-tollgate",
+  "title": "Agent Tollgate",
+  "description": "Pay-per-call crypto data for trading agents (x402 USDC): order book imbalance, token rug-pull audit, and fee-bearing swap routing via Jupiter and LI.FI.",
+  "version": "1.0.0",
+  "repository": { "url": "https://github.com/SkinWinKing/agent-tollgate-engine", "source": "github" },
+  "websiteUrl": "https://skinwinking.com",
+  "remotes": [{ "type": "streamable-http", "url": "https://skinwinking.com/mcp" }]
+}
