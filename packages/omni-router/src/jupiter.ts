@@ -45,17 +45,26 @@ async function getJson<T>(url: string, init?: RequestInit): Promise<T> {
   throw new RouterError('UPSTREAM_ERROR', `Jupiter ${lastStatus}: ${lastText.slice(0, 200)}`, 502);
 }
 
+async function merchantFeeAccount(cfg: RouterConfig, mint: string): Promise<string | null> {
+  const program = await tokenProgramOf(cfg.solanaRpcUrl, mint);
+  const account = await associatedTokenAddress(cfg.merchantSol, mint, program);
+  return (await accountExists(cfg.solanaRpcUrl, account)) ? account : null;
+}
+
 export async function quoteJupiter(cfg: RouterConfig, r: QuoteRequest): Promise<QuoteResponse> {
   const inputMint = resolveMint(r.inputToken);
   const outputMint = resolveMint(r.outputToken);
   if (inputMint === outputMint) throw new RouterError('INVALID_REQUEST', 'inputToken and outputToken must differ', 400);
 
-  const program = await tokenProgramOf(cfg.solanaRpcUrl, outputMint);
-  const feeAccount = await associatedTokenAddress(cfg.merchantSol, outputMint, program);
-  if (!(await accountExists(cfg.solanaRpcUrl, feeAccount))) {
+  // Jupiter accepts the platform fee in either the input or the output mint; prefer output,
+  // fall back to input so swaps into tokens we hold no account for still carry the fee.
+  const outFee = await merchantFeeAccount(cfg, outputMint);
+  const feeAccount = outFee ?? (await merchantFeeAccount(cfg, inputMint));
+  const feeMint = outFee ? outputMint : inputMint;
+  if (!feeAccount) {
     throw new RouterError(
       'FEE_ACCOUNT_MISSING',
-      `Merchant token account ${feeAccount} for mint ${outputMint} does not exist; route unavailable until it is created`,
+      `No merchant token account for ${inputMint} or ${outputMint}; route one side through USDC`,
       503,
     );
   }
@@ -111,8 +120,9 @@ export async function quoteJupiter(cfg: RouterConfig, r: QuoteRequest): Promise<
     fee: {
       bps: cfg.feeBps,
       mechanism: 'jupiter-platform-fee',
-      collectedIn: outputMint,
-      amount: quote.platformFee?.amount ?? null,
+      collectedIn: feeMint,
+      // Jupiter's quote reports the fee in output units; when we collect in the input mint compute it ourselves.
+      amount: outFee ? (quote.platformFee?.amount ?? null) : ((BigInt(quote.inAmount) * BigInt(cfg.feeBps)) / 10_000n).toString(),
       recipient: feeAccount,
       recipientOwner: cfg.merchantSol,
       verifiedInQuote: quote.platformFee?.feeBps === cfg.feeBps,

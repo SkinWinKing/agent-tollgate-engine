@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { AppEnv } from './env';
 import { routes } from './routes';
+import { internalMcpToken } from './x402';
 
 export { NonceStore } from './nonce-store';
 
@@ -29,7 +30,12 @@ app.get('/mcp', (c) => c.body(null, 405, { Allow: 'POST' }));
 app.post('/mcp', async (c) => {
   const msg = await c.req.json().catch(() => null);
   if (!msg || msg.jsonrpc !== '2.0') return c.json({ jsonrpc: '2.0', id: null, error: { code: -32600, message: 'Invalid Request' } }, 400);
-  const dispatch = async (path: string, init?: RequestInit) => app.fetch(new Request(new URL(path, c.req.url), init), c.env, c.executionCtx);
+  const dispatch = async (path: string, init?: RequestInit) => {
+    const headers = new Headers(init?.headers);
+    headers.set('x-tollgate-mcp', internalMcpToken());
+    headers.set('cf-connecting-ip', c.req.header('cf-connecting-ip') ?? 'unknown');
+    return app.fetch(new Request(new URL(path, c.req.url), { ...init, headers }), c.env, c.executionCtx);
+  };
   const response = await handleRpc(msg, dispatch);
   return response ? c.json(response) : c.body(null, 202);
 });

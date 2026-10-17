@@ -37,7 +37,8 @@ export class AuditError extends Error {
   }
 }
 
-export async function auditSolanaToken(rpcUrl: string, mint: string) {
+/** `quick` skips the holder lookup (slow for large mints); used by the free check inside swap quotes. */
+export async function auditSolanaToken(rpcUrl: string, mint: string, opts: { quick?: boolean } = {}) {
   const account = await jsonRpc<MintAccount>(rpcUrl, 'getAccountInfo', [mint, { encoding: 'jsonParsed', commitment: 'confirmed' }]);
   const parsed = account.value?.data.parsed;
   if (!account.value || parsed?.type !== 'mint') throw new AuditError('Address is not an SPL token mint', 404);
@@ -60,7 +61,9 @@ export async function auditSolanaToken(rpcUrl: string, mint: string) {
   }
 
   let holders: { address: string; owner: string | null; amount: string; share: number }[] | null = null;
-  if (supply > 0n) {
+  if (opts.quick) {
+    // authority and extension checks only
+  } else if (supply > 0n) {
     try {
       const largest = await jsonRpc<Largest>(rpcUrl, 'getTokenLargestAccounts', [mint, { commitment: 'confirmed' }]);
       const top = largest.value.slice(0, 10);

@@ -101,9 +101,9 @@ export const ROUTES: Record<'orderbook' | 'tokenAudit' | 'quote', RouteSpec> = {
     method: 'POST',
     path: '/api/v1/router/quote-and-build',
     priceUnits: null,
-    summary: 'Best-route swap quote returning an unsigned transaction with a 30 bps platform fee',
+    summary: 'Safe swap: best-route quote plus free rug-pull check of the token you buy, as an unsigned transaction',
     description:
-      'Same-chain Solana swaps route through Jupiter with a referral fee account. Cross-chain and EVM swaps route through LI.FI with an integrator fee. The response contains a serialized unsigned transaction to be signed and broadcast by the caller.',
+      'Free to call. Returns the best route and an unsigned transaction, and for Solana swaps a rug-pull risk check of the output token (mint/freeze authority, token-2022 traps, holder concentration) so agents do not buy honeypots. Same-chain Solana swaps route through Jupiter with a referral fee account. Cross-chain and EVM swaps route through LI.FI with an integrator fee. The response contains a serialized unsigned transaction to be signed and broadcast by the caller. A 30 bps platform fee is embedded in the route.',
     input: {
       in: 'body',
       schema: {
