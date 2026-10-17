@@ -16,20 +16,32 @@ interface Kind {
 }
 
 const KINDS_TTL_MS = 10 * 60 * 1000;
-let kindsCache: { at: number; feePayer: string | null } | null = null;
+let active: { at: number; url: string; feePayer: string | null } | null = null;
+
+/**
+ * First facilitator whose /supported answers. Some facilitators are unreachable from a
+ * zone-routed Worker (Cloudflare 525), so we fall back down the list. The Solana feePayer
+ * advertised in 402 must belong to the facilitator that later verifies, hence one shared pick.
+ */
+async function activeFacilitator(cfg: CoreConfig): Promise<{ url: string; feePayer: string | null } | null> {
+  if (active && Date.now() - active.at < KINDS_TTL_MS && cfg.facilitatorUrls.includes(active.url)) return active;
+  for (const url of cfg.facilitatorUrls) {
+    try {
+      const res = await fetch(`${url}/supported`, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      const body = (await res.json()) as { kinds?: Kind[] };
+      const feePayer = body.kinds?.find((k) => k.network === 'solana' && k.extra?.feePayer)?.extra?.feePayer ?? null;
+      active = { at: Date.now(), url, feePayer };
+      return active;
+    } catch {
+      continue;
+    }
+  }
+  return active;
+}
 
 export async function facilitatorSolanaFeePayer(cfg: CoreConfig): Promise<string | null> {
-  if (!cfg.facilitatorUrl) return null;
-  if (kindsCache && Date.now() - kindsCache.at < KINDS_TTL_MS) return kindsCache.feePayer;
-  try {
-    const res = await fetch(`${cfg.facilitatorUrl}/supported`, { signal: AbortSignal.timeout(8000) });
-    const body = (await res.json()) as { kinds?: Kind[] };
-    const feePayer = body.kinds?.find((k) => k.network === 'solana' && k.extra?.feePayer)?.extra?.feePayer ?? null;
-    kindsCache = { at: Date.now(), feePayer };
-    return feePayer;
-  } catch {
-    return kindsCache?.feePayer ?? null;
-  }
+  return (await activeFacilitator(cfg))?.feePayer ?? null;
 }
 
 const v2Network = (caip: string): 'polygon' | 'base' | 'solana' => (caip.startsWith('solana') ? 'solana' : caip === 'eip155:8453' ? 'base' : 'polygon');
@@ -60,7 +72,9 @@ export async function verifyViaFacilitator(
   requirements: Requirements,
 ): Promise<{ result: VerifyResult; nonceKey: string | null; extensionResponses: string | null }> {
   const fail = (reason: string, retryable: boolean) => ({ result: VerifyResultFail(reason, retryable), nonceKey: null, extensionResponses: null });
-  if (!cfg.facilitatorUrl) return fail('FACILITATOR_NOT_CONFIGURED', false);
+  if (cfg.facilitatorUrls.length === 0) return fail('FACILITATOR_NOT_CONFIGURED', false);
+  const facilitator = await activeFacilitator(cfg);
+  if (!facilitator) return fail('FACILITATOR_UNAVAILABLE', true);
   const paymentPayload = decodePayload(header);
   if (!paymentPayload) return fail('MALFORMED_PAYMENT_PAYLOAD', false);
 
@@ -77,9 +91,9 @@ export async function verifyViaFacilitator(
   const amountUnits = Number('amount' in requirement ? requirement.amount : requirement.maxAmountRequired);
   const body = { x402Version: version, paymentPayload, paymentRequirements: requirement };
   try {
-    const verify = await post<{ isValid: boolean; invalidReason?: string; payer?: string }>(`${cfg.facilitatorUrl}/verify`, body);
+    const verify = await post<{ isValid: boolean; invalidReason?: string; payer?: string }>(`${facilitator.url}/verify`, body);
     if (!verify.isValid) return fail(verify.invalidReason ?? 'FACILITATOR_REJECTED', false);
-    const settleRes = await fetch(`${cfg.facilitatorUrl}/settle`, {
+    const settleRes = await fetch(`${facilitator.url}/settle`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),

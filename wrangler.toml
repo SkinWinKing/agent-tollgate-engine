@@ -9,9 +9,12 @@ MERCHANT_PAYOUT_ADDRESS_EVM = "0x64f0117D37DDf366405747D7f9520851907fd077"
 PLATFORM_FEE_BPS = "30"
 EVM_MIN_CONFIRMATIONS = "3"
 PAYMENT_MAX_AGE_SEC = "900"
-X402_FACILITATOR_URL = "https://facilitator.payai.network"
+X402_FACILITATOR_URL = "https://x402.dexter.cash,https://facilitator.payai.network"
 LIFI_INTEGRATOR = "agent-tollgate"
 JITO_TIP_LAMPORTS = "100000"
+
+[observability]
+enabled = true
 
 [[durable_objects.bindings]]
 name = "NONCE_STORE"

@@ -51,6 +51,7 @@ export class RouterError extends Error {
     readonly code: string,
     message: string,
     readonly status: number,
+    readonly details?: Record<string, unknown>,
   ) {
     super(message);
   }

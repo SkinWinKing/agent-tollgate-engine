@@ -62,7 +62,12 @@ routes.post(ROUTES.quote.path, async (c) => {
   try {
     return c.json(await quoteAndBuild(loadRouterConfig(c.env as unknown as Record<string, unknown>), body));
   } catch (err) {
-    if (err instanceof RouterError) return c.json({ error: err.code, message: err.message }, err.status as 400);
+    if (err instanceof RouterError) {
+      // Field names only (no values) so we can see what agents send without logging wallets.
+      const keys = body && typeof body === 'object' ? Object.keys(body).join(',') : typeof body;
+      console.log(JSON.stringify({ evt: 'quote_error', code: err.code, message: err.message, keys }));
+      return c.json({ error: err.code, message: err.message, ...err.details }, err.status as 400);
+    }
     throw err;
   }
 });

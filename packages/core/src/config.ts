@@ -47,7 +47,10 @@ export function loadConfig(env: RawEnv): CoreConfig {
     minConfirmations: int(env, 'EVM_MIN_CONFIRMATIONS', 3),
     maxAgeSec: int(env, 'PAYMENT_MAX_AGE_SEC', 900),
     feeBps,
-    facilitatorUrl: str(env, 'X402_FACILITATOR_URL')?.replace(/\/+$/, '') ?? null,
+    facilitatorUrls: (str(env, 'X402_FACILITATOR_URL') ?? '')
+      .split(',')
+      .map((u) => u.trim().replace(/\/+$/, ''))
+      .filter(Boolean),
     simSecret: str(env, 'SIM_SECRET'),
   };
 }

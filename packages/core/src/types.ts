@@ -14,7 +14,8 @@ export interface CoreConfig {
   minConfirmations: number;
   maxAgeSec: number;
   feeBps: number;
-  facilitatorUrl: string | null;
+  /** Ordered list; the first one reachable from the Worker is used. */
+  facilitatorUrls: string[];
   simSecret: string | null;
 }
 
