@@ -13,6 +13,13 @@ import type { MiddlewareHandler } from 'hono';
 import type { AppEnv } from './env';
 
 export const FREE_TRIAL_PER_DAY = 3;
+// Caps free answers across all callers so IP rotation cannot drain RPC quotas.
+export const FREE_TRIAL_GLOBAL_PER_DAY = 100;
+const STATS_TTL_SEC = 60 * 86_400;
+
+type Store = { bump(key: string, ttlSec: number): Promise<void> };
+/** Daily usage counter, read back via /internal/stats. Never awaited on the hot path's critical result. */
+export const track = (stub: Store, evt: string) => stub.bump(`stat:${new Date().toISOString().slice(0, 10)}:${evt}`, STATS_TTL_SEC).catch(() => {});
 
 // Marks requests dispatched in-process by our own /mcp handler. Random per isolate, created lazily
 // because Workers forbid random values at global scope; never leaves the Worker.
@@ -68,18 +75,26 @@ export const x402PaymentGate = (route: RouteSpec): MiddlewareHandler<AppEnv> => 
   if (!proof && c.req.header('x-tollgate-mcp') === internalMcpToken()) {
     const ip = c.req.header('cf-connecting-ip') ?? 'unknown';
     const day = Math.floor(Date.now() / 86_400_000);
-    if (await stub.hit(`free:${route.id}:${ip}:${day}`, FREE_TRIAL_PER_DAY, 2 * 86_400)) {
+    if (
+      (await stub.hit(`free:${route.id}:${ip}:${day}`, FREE_TRIAL_PER_DAY, 2 * 86_400)) &&
+      (await stub.hit(`free:global:${day}`, FREE_TRIAL_GLOBAL_PER_DAY, 2 * 86_400))
+    ) {
       c.header('X-Free-Trial', '1');
+      c.executionCtx.waitUntil(track(stub, `free:${route.id}`));
       return next();
     }
   }
-  if (!proof) return challenge('PAYMENT_REQUIRED', true);
+  if (!proof) {
+    c.executionCtx.waitUntil(track(stub, `402:${route.id}`));
+    return challenge('PAYMENT_REQUIRED', true);
+  }
 
   const nonces: NonceStore = { consume: (key, ttl) => stub.consume(key, ttl) };
   const { result, extensionResponses } = await verifyPayment(cfg, proof, route, requirements, nonces);
   if (!result.ok) return challenge(result.reason, result.retryable);
 
   c.set('payment', result.payment);
+  c.executionCtx.waitUntil(track(stub, `paid:${route.id}:${result.payment.network}`));
   const receipt = b64({ success: true, network: result.payment.network, transaction: result.payment.reference, payer: result.payment.payer });
   c.header('PAYMENT-RESPONSE', receipt);
   c.header('X-PAYMENT-RESPONSE', receipt);

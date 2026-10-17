@@ -5,7 +5,7 @@ import type { AppEnv } from './env';
 import { auditEvmToken, EVM_CHAINS, type EvmChain } from './services/audit-evm';
 import { auditSolanaToken, AuditError } from './services/audit-solana';
 import { orderbookImbalance, OrderbookError } from './services/orderbook';
-import { x402PaymentGate } from './x402';
+import { track, x402PaymentGate } from './x402';
 
 export const routes = new Hono<AppEnv>();
 
@@ -87,12 +87,15 @@ routes.post(ROUTES.quote.path, async (c) => {
     const quote = await quoteAndBuild(loadRouterConfig(c.env as unknown as Record<string, unknown>), body);
     const outputMint = quote.route === 'jupiter' ? String(quote.quote.outputMint ?? '') : '';
     const outputTokenRisk = outputMint ? await quickRisk(loadConfig(c.env as unknown as Record<string, unknown>).solanaRpcUrl, outputMint) : undefined;
+    const stub = c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global'));
+    c.executionCtx.waitUntil(track(stub, `quote:${quote.route}${outputTokenRisk && 'warning' in outputTokenRisk ? ':risky' : ''}`));
     return c.json({ ...quote, ...(outputTokenRisk ? { outputTokenRisk } : {}) });
   } catch (err) {
     if (err instanceof RouterError) {
       // Field names only (no values) so we can see what agents send without logging wallets.
       const keys = body && typeof body === 'object' ? Object.keys(body).join(',') : typeof body;
       console.log(JSON.stringify({ evt: 'quote_error', code: err.code, message: err.message, keys }));
+      c.executionCtx.waitUntil(track(c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global')), `quote_error:${err.code}`));
       return c.json({ error: err.code, message: err.message, ...err.details }, err.status as 400);
     }
     throw err;

@@ -15,6 +15,7 @@ export interface WorkerEnv {
   JITO_TIP_LAMPORTS?: string;
   X402_FACILITATOR_URL?: string;
   SIM_SECRET?: string;
+  STATS_TOKEN?: string;
 }
 
 export type AppEnv = { Bindings: WorkerEnv; Variables: { payment: VerifiedPayment } };

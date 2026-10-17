@@ -40,6 +40,14 @@ app.post('/mcp', async (c) => {
   return response ? c.json(response) : c.body(null, 202);
 });
 
+// Usage counters for the operator; disabled unless STATS_TOKEN is set as a secret.
+app.get('/internal/stats', async (c) => {
+  const token = c.env.STATS_TOKEN;
+  if (!token || c.req.header('authorization') !== `Bearer ${token}`) return c.json({ error: 'NOT_FOUND' }, 404);
+  const stub = c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global'));
+  return c.json(await stub.stats('stat:'));
+});
+
 app.route('/', routes);
 
 app.onError((err, c) => {

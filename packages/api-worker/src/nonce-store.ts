@@ -22,6 +22,19 @@ export class NonceStore extends DurableObject {
     return true;
   }
 
+  /** Durable counter for usage stats; entries use the same {n, exp} shape so the sweep expires them. */
+  async bump(key: string, ttlSec: number): Promise<void> {
+    const now = Date.now();
+    const current = await this.ctx.storage.get<{ n: number; exp: number }>(key);
+    await this.ctx.storage.put(key, { n: (current?.n ?? 0) + 1, exp: current?.exp ?? now + ttlSec * 1000 });
+    if ((await this.ctx.storage.getAlarm()) === null) await this.ctx.storage.setAlarm(now + SWEEP_INTERVAL_MS);
+  }
+
+  async stats(prefix: string): Promise<Record<string, number>> {
+    const entries = await this.ctx.storage.list<{ n: number; exp: number }>({ prefix });
+    return Object.fromEntries([...entries].map(([k, v]) => [k.slice(prefix.length), v.n]));
+  }
+
   async alarm(): Promise<void> {
     const now = Date.now();
     const entries = await this.ctx.storage.list<number | { n: number; exp: number }>();
