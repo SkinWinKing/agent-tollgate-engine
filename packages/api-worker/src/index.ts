@@ -38,6 +38,15 @@ app.use('/api/v1/*', async (c, next) => {
   }
 });
 
+// Paid answers and 402 challenges carry one-time nonces: never cache them. Discovery documents may be cached briefly.
+const DYNAMIC = /^\/(api|mcp|a2a|internal)(\/|$)/;
+app.use('*', async (c, next) => {
+  await next();
+  if (c.res.headers.has('cache-control')) return;
+  if (DYNAMIC.test(c.req.path) || c.res.status === 402 || c.req.method !== 'GET') c.res.headers.set('cache-control', 'no-store');
+  else if (c.res.status === 200) c.res.headers.set('cache-control', 'public, max-age=300');
+});
+
 app.route('/', discovery);
 
 app.get('/favicon.ico', (c) => c.body(FAVICON, 200, { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' }));
