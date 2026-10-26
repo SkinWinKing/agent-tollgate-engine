@@ -1,9 +1,10 @@
-import { loadConfig, ROUTES, SOLANA_ADDRESS } from '@tollgate/core';
+import { DATA_ROUTES, loadConfig, ROUTES, SOLANA_ADDRESS } from '@tollgate/core';
 import { loadRouterConfig, quoteAndBuild, RouterError } from '@tollgate/omni-router';
 import { Hono } from 'hono';
 import type { AppEnv } from './env';
 import { auditEvmToken, EVM_CHAINS, type EvmChain } from './services/audit-evm';
 import { auditSolanaToken, AuditError } from './services/audit-solana';
+import { DATA_HANDLERS, DataError } from './services/data-tools';
 import { orderbookImbalance, OrderbookError } from './services/orderbook';
 import { track, x402PaymentGate } from './x402';
 
@@ -45,6 +46,19 @@ routes.use(ROUTES.quote.path, async (c, next) => {
   }
   await next();
 });
+
+for (const route of DATA_ROUTES) {
+  const handler = DATA_HANDLERS[route.id]!;
+  routes.use(route.path, x402PaymentGate(route));
+  routes.get(route.path, async (c) => {
+    try {
+      return c.json(await handler(new URL(c.req.url).searchParams, loadConfig(c.env as unknown as Record<string, unknown>)));
+    } catch (err) {
+      if (err instanceof DataError) return c.json({ error: 'DATA_ERROR', message: err.message }, err.status as 400);
+      return c.json({ error: 'UPSTREAM_ERROR', message: err instanceof Error ? err.message : 'upstream failed' }, 502);
+    }
+  });
+}
 
 routes.use(ROUTES.quote.path, x402PaymentGate(ROUTES.quote));
 routes.use(ROUTES.orderbook.path, x402PaymentGate(ROUTES.orderbook));

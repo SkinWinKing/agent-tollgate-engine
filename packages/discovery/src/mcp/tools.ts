@@ -1,4 +1,4 @@
-import { ROUTES, type RouteSpec } from '@tollgate/core';
+import { DATA_ROUTES, ROUTES, unitsToUsdc, type RouteSpec } from '@tollgate/core';
 
 export type Dispatch = (path: string, init?: RequestInit) => Promise<Response>;
 
@@ -46,6 +46,12 @@ export const TOOLS: ToolDef[] = [
     inputSchema: withProof(ROUTES.quote),
     route: ROUTES.quote,
   },
+  ...DATA_ROUTES.map((route) => ({
+    name: route.id,
+    description: `${route.description} ${unitsToUsdc(route.priceUnits ?? 0)} USDC per call via x402.`,
+    inputSchema: withProof(route),
+    route,
+  })),
 ];
 
 export async function callTool(name: string, args: Record<string, unknown>, dispatch: Dispatch): Promise<ToolResult> {

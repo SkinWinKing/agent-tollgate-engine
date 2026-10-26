@@ -1,4 +1,4 @@
-import { ROUTES, unitsToUsdc, type RouteSpec } from '@tollgate/core';
+import { ALL_ROUTES, unitsToUsdc, type RouteSpec } from '@tollgate/core';
 import type { DiscoveryContext } from './context';
 
 const paid = (r: RouteSpec) => (r.priceUnits === null ? 'free (platform fee on swap output)' : `${unitsToUsdc(r.priceUnits)} USDC per call`);
@@ -12,11 +12,11 @@ Price: ${paid(r)}
 ${r.description}
 Input (${r.input.in}):
 ${props}
-Example: curl -X ${r.method} ${ctx.origin}${r.path}${r.method === 'GET' ? '?pair=SOL-USDT' : ''}`;
+Example: curl -X ${r.method} '${ctx.origin}${r.path}${r.method === 'GET' && Object.keys(r.example.input).length ? '?' + new URLSearchParams(Object.entries(r.example.input).map(([k, v]) => [k, String(v)])) : ''}'`;
 };
 
 export function llmsTxt(ctx: DiscoveryContext): string {
-  const routes = Object.values(ROUTES);
+  const routes = ALL_ROUTES;
   return `# Agent Tollgate Engine
 
 > Pay-per-call market intelligence and fee-bearing swap routing for autonomous trading agents. No accounts, no API keys: pay in USDC per request using HTTP 402.

@@ -7,3 +7,4 @@ export * from './catalog';
 export { signSimulationReceipt } from './sim-verifier';
 export * from './bazaar';
 export { facilitatorSolanaFeePayer } from './facilitator';
+export * from './data-routes';
