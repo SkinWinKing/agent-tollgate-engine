@@ -73,6 +73,14 @@ app.get('/.well-known/agent-card.json', (c) => {
     })),
   });
 });
+// RFC 9116 contact for vulnerability reports.
+app.get('/.well-known/security.txt', (c) => {
+  const expires = new Date(Date.now() + 180 * 86_400_000).toISOString();
+  return c.text(
+    `Contact: mailto:support@skinwinking.com\nExpires: ${expires}\nPreferred-Languages: en, hr\nCanonical: ${new URL(c.req.url).origin}/.well-known/security.txt\nPolicy: https://github.com/SkinWinKing/agent-tollgate-engine/security\n`,
+  );
+});
+app.get('/security.txt', (c) => c.redirect('/.well-known/security.txt', 301));
 app.get('/.well-known/agent.json', (c) => c.redirect('/.well-known/agent-card.json', 301));
 
 app.get('/mcp', (c) => c.body(null, 405, { Allow: 'POST' }));
