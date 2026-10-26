@@ -9,6 +9,8 @@ type Handler = (q: URLSearchParams, env: UtilEnv) => Promise<Record<string, unkn
 const MAX_TEXT = 20_000;
 const LLM = '@cf/meta/llama-3.1-8b-instruct-fast';
 const UA = 'AgentTollgate/1.0 (+https://skinwinking.com)';
+// AI Gateway caches identical prompts (no neuron spend on repeats) and rate-limits the free quota.
+const GATEWAY = { gateway: { id: 'tollgate' } };
 
 function need(q: URLSearchParams, key: string, max = MAX_TEXT): string {
   const v = q.get(key);
@@ -193,7 +195,7 @@ async function llm(env: UtilEnv, system: string, user: string, maxTokens = 512, 
       ],
       max_tokens: maxTokens,
       ...(json ? { response_format: { type: 'json_object' } } : {}),
-    } as never);
+    } as never, GATEWAY);
   } catch (err) {
     throw new DataError(`AI model error: ${err instanceof Error ? err.message : 'unknown'}`, 502);
   }
@@ -215,7 +217,7 @@ function parseJsonLoose(text: string): unknown {
 
 const aiRun = async <T>(env: UtilEnv, model: string, input: Record<string, unknown>): Promise<T> => {
   try {
-    return (await env.ai.run(model as Parameters<Ai['run']>[0], input as never)) as T;
+    return (await env.ai.run(model as Parameters<Ai['run']>[0], input as never, GATEWAY)) as T;
   } catch (err) {
     throw new DataError(`AI model error: ${err instanceof Error ? err.message : 'unknown'}`, 502);
   }
