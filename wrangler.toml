@@ -3,6 +3,9 @@ main = "packages/api-worker/src/index.ts"
 compatibility_date = "2025-09-01"
 compatibility_flags = ["nodejs_compat"]
 
+[placement]
+mode = "smart"
+
 [vars]
 MERCHANT_PAYOUT_ADDRESS_SOL = "DSvMhichkVACpR89fmuN2m1UZry8AgNb1QXFZetmDmT1"
 MERCHANT_PAYOUT_ADDRESS_EVM = "0x64f0117D37DDf366405747D7f9520851907fd077"
