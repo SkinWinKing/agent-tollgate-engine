@@ -1,3 +1,5 @@
+import { ALL_ROUTES, unitsToUsdc } from '@tollgate/core';
+import { recommendTools } from '../agent-discovery';
 import { DataError, type DataEnv } from './data-tools';
 
 export interface UtilEnv extends DataEnv {
@@ -240,6 +242,15 @@ const aiRun = async <T>(env: UtilEnv, model: string, input: Record<string, unkno
 // ---- Handlers --------------------------------------------------------------
 
 export const UTIL_HANDLERS: Record<string, Handler> = {
+  async tool_catalog(q) {
+    const task = q.get('task')?.slice(0, 500) ?? '';
+    const routes = task ? recommendTools(task, 10) : ALL_ROUTES;
+    return {
+      task: task || null,
+      tools: routes.map((r) => ({ id: r.id, method: r.method, path: r.path, price: r.priceUnits === null ? 'free' : `${unitsToUsdc(r.priceUnits)} USDC`, summary: r.summary, input: r.input })),
+    };
+  },
+
   async hash(q) {
     const algo = (q.get('algo') ?? 'sha256').toLowerCase().replace('-', '');
     const name = { sha1: 'SHA-1', sha256: 'SHA-256', sha384: 'SHA-384', sha512: 'SHA-512' }[algo];

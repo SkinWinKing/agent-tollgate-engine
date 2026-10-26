@@ -29,6 +29,17 @@ const tool = (
 });
 
 export const UTIL_ROUTES: RouteSpec[] = [
+  {
+    id: 'tool_catalog',
+    method: 'GET',
+    path: '/api/v1',
+    priceUnits: usdcToUnits(0.001),
+    summary: 'Find the right tool for a task (paid catalog search)',
+    description: 'Ranks the tools in this API against a plain-language task and returns the best matches with method, URL, price and input schema. The free catalog is at /llms.txt and /openapi.json.',
+    input: { in: 'query', schema: { type: 'object', properties: { task: { type: 'string', description: 'What you need to do, e.g. check if a token is a rug pull' } }, required: [] } },
+    output: { type: 'object' },
+    example: { input: { task: 'check if a token is a rug pull' }, output: { tools: [{ id: 'token_audit', price: '0.20 USDC' }] } },
+  },
   // ---- Pure compute -------------------------------------------------------
   tool('hash', 'POST', 'util/hash', 0.001, 'Hash text with SHA-1, SHA-256, SHA-384 or SHA-512',
     'Returns the hex and base64 digest of the input text. Default algorithm sha256.',

@@ -3,6 +3,7 @@ import { handleRpc, llmsTxt, openApiSpec, type DiscoveryContext } from '@tollgat
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { AppEnv } from './env';
+import { discovery } from './agent-discovery';
 import { routes, TOOL_HANDLERS } from './routes';
 
 export { NonceStore } from './nonce-store';
@@ -37,11 +38,18 @@ app.use('/api/v1/*', async (c, next) => {
   }
 });
 
+app.route('/', discovery);
+
 app.get('/favicon.ico', (c) => c.body(FAVICON, 200, { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' }));
 app.get('/favicon.svg', (c) => c.body(FAVICON, 200, { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' }));
 app.get('/health', (c) => c.json({ ok: true }));
-app.get('/', (c) => c.redirect('/llms.txt'));
-app.get('/llms.txt', (c) => c.text(llmsTxt(context(c.env, c.req.url))));
+// Agents asking for markdown get the catalog directly; everyone else is redirected to it.
+app.get('/', (c) =>
+  (c.req.header('accept') ?? '').includes('text/markdown')
+    ? c.body(llmsTxt(context(c.env, c.req.url)), 200, { 'content-type': 'text/markdown; charset=utf-8', vary: 'Accept' })
+    : c.redirect('/llms.txt'),
+);
+app.get('/llms.txt', (c) => c.body(llmsTxt(context(c.env, c.req.url)), 200, { 'content-type': 'text/markdown; charset=utf-8' }));
 app.get('/openapi.json', (c) => c.json(openApiSpec(context(c.env, c.req.url))));
 
 // x402 discovery manifest read by crawlers (x402scan, Agent402 index) to list every paid resource.
@@ -56,9 +64,11 @@ app.get('/.well-known/agent-card.json', (c) => {
   return c.json({
     protocolVersion: '0.3.0',
     name: 'Agent Tollgate Engine',
-    description: 'Pay-per-call crypto market data, token security audits, technical indicators and fee-bearing swap routing for autonomous agents. Pay per request in USDC over x402; no account or API key.',
-    url: `${origin}/mcp`,
+    description: `Tell it a task in plain language and it returns the matching pay-per-call tools (${ALL_ROUTES.length} total: crypto data, token audits, swaps, web and threat-intel lookups, AI tools) with prices. Tools are paid per request in USDC over x402; no account or API key. MCP: ${origin}/mcp`,
+    url: `${origin}/a2a`,
     preferredTransport: 'JSONRPC',
+    supportedInterfaces: [{ url: `${origin}/a2a`, protocolBinding: 'JSONRPC', protocolVersion: '0.3.0' }],
+    additionalInterfaces: [{ url: `${origin}/a2a`, transport: 'JSONRPC' }],
     version: '1.0.0',
     provider: { organization: 'Agent Tollgate', url: origin },
     documentationUrl: `${origin}/llms.txt`,
@@ -77,7 +87,7 @@ app.get('/.well-known/agent-card.json', (c) => {
 app.get('/robots.txt', (c) => {
   const origin = new URL(c.req.url).origin;
   return c.text(
-    `User-agent: *\nContent-Signal: search=yes, ai-input=yes, ai-train=yes\nAllow: /\nDisallow: /internal/\n\n# Pay-per-call tools for AI agents (x402). Start here:\n# ${origin}/llms.txt\n# ${origin}/openapi.json\n# ${origin}/.well-known/x402\n# MCP: ${origin}/mcp\n`,
+    `User-agent: *\nContent-Signal: search=yes, ai-input=yes, ai-train=yes\nAllow: /\nDisallow: /internal/\n\n# Pay-per-call tools for AI agents (x402). Start here:\n# ${origin}/llms.txt\n# ${origin}/openapi.json\n# ${origin}/.well-known/x402\n# MCP: ${origin}/mcp\n\nSitemap: ${origin}/sitemap.xml\n`,
   );
 });
 
