@@ -657,6 +657,30 @@ export const UTIL_HANDLERS: Record<string, Handler> = {
     };
   },
 
+  async image_transform(q) {
+    const url = publicUrl(need(q, 'url', 4000));
+    const fit = q.get('fit') ?? 'scale-down';
+    const format = q.get('format') ?? 'webp';
+    if (!['scale-down', 'contain', 'cover', 'crop', 'pad'].includes(fit)) throw new DataError('fit must be scale-down, contain, cover, crop or pad', 400);
+    if (!['webp', 'avif', 'jpeg', 'png', 'auto'].includes(format)) throw new DataError('format must be webp, avif, jpeg, png or auto', 400);
+    const width = q.get('width') ? intParam(q, 'width', 0, 1, 4096) : undefined;
+    const height = q.get('height') ? intParam(q, 'height', 0, 1, 4096) : undefined;
+    // cf.image runs Cloudflare Image Transformations on the zone (enabled for skinwinking.com).
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(15_000),
+      headers: { 'user-agent': UA, accept: 'image/avif,image/webp,image/*' },
+      cf: { image: { fit, format: format === 'auto' ? undefined : format, quality: intParam(q, 'quality', 85, 1, 100), ...(width ? { width } : {}), ...(height ? { height } : {}) } },
+    } as RequestInit);
+    if (!res.ok) throw new DataError(`Image fetch or transform failed: HTTP ${res.status}`, 502);
+    const type = res.headers.get('content-type') ?? 'application/octet-stream';
+    if (!type.startsWith('image/')) throw new DataError(`URL did not return an image (${type})`, 415);
+    const buf = new Uint8Array(await res.arrayBuffer());
+    if (buf.byteLength > 4_000_000) throw new DataError('Output larger than 4 MB; request a smaller width', 413);
+    let bin = '';
+    for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+    return { contentType: type, bytes: buf.byteLength, transformed: res.headers.has('cf-resized'), image: `data:${type};base64,${btoa(bin)}` };
+  },
+
   async ai_summarize(q, env) {
     const length = q.get('length') ?? 'short';
     const words = { short: 60, medium: 150, long: 300 }[length] ?? 60;

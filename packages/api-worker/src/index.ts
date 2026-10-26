@@ -3,7 +3,7 @@ import { handleRpc, llmsTxt, openApiSpec, type DiscoveryContext } from '@tollgat
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { AppEnv } from './env';
-import { routes } from './routes';
+import { routes, TOOL_HANDLERS } from './routes';
 
 export { NonceStore } from './nonce-store';
 
@@ -101,6 +101,19 @@ app.get('/internal/stats', async (c) => {
     c.env.SALES.prepare('SELECT ts, route, network, amount_units / 1e6 AS usdc, payer, reference FROM sales ORDER BY id DESC LIMIT 20').all(),
   ]);
   return c.json({ sales: { byRoute: byRoute.results, recent: recent.results }, counters });
+});
+
+// Operator-only: run any tool handler live without paying, for smoke tests after a deploy.
+app.get('/internal/tool/:id', async (c) => {
+  const token = c.env.STATS_TOKEN;
+  if (!token || c.req.header('authorization') !== `Bearer ${token}`) return c.json({ error: 'NOT_FOUND' }, 404);
+  const handler = TOOL_HANDLERS[c.req.param('id')];
+  if (!handler) return c.json({ error: 'NOT_FOUND' }, 404);
+  try {
+    return c.json(await handler(new URL(c.req.url).searchParams, { ...loadConfig(c.env as unknown as Record<string, unknown>), ai: c.env.AI, cache: c.env.CACHE }));
+  } catch (err) {
+    return c.json({ error: err instanceof Error ? err.message : 'failed' }, 500);
+  }
 });
 
 app.route('/', routes);

@@ -103,6 +103,18 @@ export const UTIL_ROUTES: RouteSpec[] = [
     'Stars, forks, open issues, language, license, topics, last push and the latest release of a public GitHub repository.',
     { repo: str('owner/name, e.g. solana-labs/solana') }, ['repo'], { repo: 'coinbase/x402' }, { stars: 4000, latestRelease: { tag: 'v1.0.0' } }),
 
+  tool('image_transform', 'GET', 'web/image-transform', 0.005, 'Resize, crop and convert any image URL (WebP, AVIF, JPEG, PNG)',
+    'Fetches a public image and returns it resized, cropped or converted, as a base64 data URL with the output size. Fit modes scale-down, contain, cover, crop, pad. Max 4 MB output.',
+    {
+      url: str('Public image URL'),
+      width: { type: 'integer', minimum: 1, maximum: 4096 },
+      height: { type: 'integer', minimum: 1, maximum: 4096 },
+      fit: str('scale-down, contain, cover, crop or pad', { default: 'scale-down' }),
+      format: str('webp, avif, jpeg, png or auto', { default: 'webp' }),
+      quality: { type: 'integer', minimum: 1, maximum: 100, default: 85 },
+    },
+    ['url'], { url: 'https://upload.wikimedia.org/wikipedia/commons/4/46/Bitcoin.svg', width: 256, format: 'png' }, { contentType: 'image/png', bytes: 12000, image: 'data:image/png;base64,...' }),
+
   // ---- AI (Workers AI) ----------------------------------------------------
   tool('ai_summarize', 'POST', 'ai/summarize', 0.01, 'Summarize text into a short summary and key points',
     'LLM summary of long text: a concise summary in the requested length and language plus bullet key points.',

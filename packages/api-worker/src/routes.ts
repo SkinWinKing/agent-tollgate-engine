@@ -48,7 +48,7 @@ routes.use(ROUTES.quote.path, async (c, next) => {
   await next();
 });
 
-const TOOL_HANDLERS = { ...DATA_HANDLERS, ...UTIL_HANDLERS };
+export const TOOL_HANDLERS = { ...DATA_HANDLERS, ...UTIL_HANDLERS };
 
 for (const route of [...DATA_ROUTES, ...UTIL_ROUTES]) {
   const handler = TOOL_HANDLERS[route.id]!;
