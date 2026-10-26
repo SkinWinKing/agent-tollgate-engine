@@ -113,7 +113,7 @@ export const UTIL_ROUTES: RouteSpec[] = [
       format: str('webp, avif, jpeg, png or auto', { default: 'webp' }),
       quality: { type: 'integer', minimum: 1, maximum: 100, default: 85 },
     },
-    ['url'], { url: 'https://upload.wikimedia.org/wikipedia/commons/4/46/Bitcoin.svg', width: 256, format: 'png' }, { contentType: 'image/png', bytes: 12000, image: 'data:image/png;base64,...' }),
+    ['url'], { url: 'https://www.gstatic.com/webp/gallery/1.jpg', width: 200, format: 'webp' }, { contentType: 'image/webp', bytes: 7682, transformed: true, image: 'data:image/webp;base64,...' }),
 
   // ---- AI (Workers AI) ----------------------------------------------------
   tool('ai_summarize', 'POST', 'ai/summarize', 0.01, 'Summarize text into a short summary and key points',
