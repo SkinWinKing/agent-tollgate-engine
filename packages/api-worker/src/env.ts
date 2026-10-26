@@ -4,6 +4,8 @@ import type { NonceStore } from './nonce-store';
 export interface WorkerEnv {
   NONCE_STORE: DurableObjectNamespace<NonceStore>;
   AI: Ai;
+  SALES: D1Database;
+  CACHE: KVNamespace;
   MERCHANT_PAYOUT_ADDRESS_SOL: string;
   MERCHANT_PAYOUT_ADDRESS_EVM: string;
   SOLANA_RPC_URL?: string;

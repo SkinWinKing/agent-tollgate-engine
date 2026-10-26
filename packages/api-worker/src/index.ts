@@ -74,7 +74,12 @@ app.get('/internal/stats', async (c) => {
   const token = c.env.STATS_TOKEN;
   if (!token || c.req.header('authorization') !== `Bearer ${token}`) return c.json({ error: 'NOT_FOUND' }, 404);
   const stub = c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global'));
-  return c.json(await stub.stats('stat:'));
+  const [counters, byRoute, recent] = await Promise.all([
+    stub.stats('stat:'),
+    c.env.SALES.prepare('SELECT route, network, COUNT(*) AS calls, SUM(amount_units) / 1e6 AS usdc FROM sales GROUP BY route, network ORDER BY usdc DESC').all(),
+    c.env.SALES.prepare('SELECT ts, route, network, amount_units / 1e6 AS usdc, payer, reference FROM sales ORDER BY id DESC LIMIT 20').all(),
+  ]);
+  return c.json({ sales: { byRoute: byRoute.results, recent: recent.results }, counters });
 });
 
 app.route('/', routes);

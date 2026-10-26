@@ -13,6 +13,16 @@ export class DataError extends Error {
 export interface DataEnv {
   solanaRpcUrl: string;
   evmRpcUrl: string;
+  cache?: KVNamespace;
+}
+
+/** Caches slow-changing upstream JSON in KV so repeat calls skip the upstream (KV minimum TTL is 60 s). */
+export async function cached<T>(env: DataEnv, key: string, ttlSec: number, load: () => Promise<T>): Promise<T> {
+  const hit = await env.cache?.get<T>(key, 'json').catch(() => null);
+  if (hit) return hit;
+  const value = await load();
+  await env.cache?.put(key, JSON.stringify(value), { expirationTtl: Math.max(60, ttlSec) }).catch(() => {});
+  return value;
 }
 
 type Handler = (q: URLSearchParams, env: DataEnv) => Promise<Record<string, unknown>>;
@@ -267,15 +277,15 @@ export const DATA_HANDLERS: Record<string, Handler> = {
     return { query: term, results: pairs.map((p) => ({ ...pairSummary(p), token: p.baseToken })) };
   },
 
-  async trending_tokens(q) {
+  async trending_tokens(q, env) {
     const chain = chainFilter(q);
-    const rows = await getJson<DexListing[]>('https://api.dexscreener.com/token-boosts/top/v1');
+    const rows = await cached(env, 'dex:boosts', 60, () => getJson<DexListing[]>('https://api.dexscreener.com/token-boosts/top/v1'));
     return { source: 'dexscreener boosts', tokens: rows.filter((t) => !chain || t.chainId === chain).map(listing) };
   },
 
-  async new_token_profiles(q) {
+  async new_token_profiles(q, env) {
     const chain = chainFilter(q);
-    const rows = await getJson<DexListing[]>('https://api.dexscreener.com/token-profiles/latest/v1');
+    const rows = await cached(env, 'dex:profiles', 60, () => getJson<DexListing[]>('https://api.dexscreener.com/token-profiles/latest/v1'));
     return {
       tokens: rows.filter((t) => !chain || t.chainId === chain).map(listing),
       note: 'New launches are high risk; run /api/v1/security/token-audit before buying.',
@@ -391,9 +401,9 @@ export const DATA_HANDLERS: Record<string, Handler> = {
     return { symbol: base, venues, bias: avg > 0.0001 ? 'longs_paying' : avg < 0 ? 'shorts_paying' : 'neutral', asOf: new Date().toISOString() };
   },
 
-  async fear_greed(q) {
+  async fear_greed(q, env) {
     const days = intParam(q, 'days', 7, 30);
-    const d = await getJson<{ data: { value: string; value_classification: string; timestamp: string }[] }>(`https://api.alternative.me/fng/?limit=${days}`);
+    const d = await cached(env, `fng:${days}`, 900, () => getJson<{ data: { value: string; value_classification: string; timestamp: string }[] }>(`https://api.alternative.me/fng/?limit=${days}`));
     const rows = d.data.map((r) => ({ value: Number(r.value), classification: r.value_classification, date: new Date(Number(r.timestamp) * 1000).toISOString().slice(0, 10) }));
     if (!rows.length) throw new DataError('Index unavailable', 502);
     return { value: rows[0]!.value, classification: rows[0]!.classification, history: rows, source: 'alternative.me' };
@@ -455,7 +465,7 @@ export const DATA_HANDLERS: Record<string, Handler> = {
     };
   },
 
-  async stablecoin_pegs(q) {
+  async stablecoin_pegs(q, env) {
     const limit = intParam(q, 'limit', 15, 50);
     type Asset = {
       name: string;
@@ -468,7 +478,7 @@ export const DATA_HANDLERS: Record<string, Handler> = {
       circulatingPrevWeek: Record<string, number>;
       circulatingPrevMonth: Record<string, number>;
     };
-    const d = await getJson<{ peggedAssets: Asset[] }>('https://stablecoins.llama.fi/stablecoins?includePrices=true', 10_000);
+    const d = await cached(env, 'llama:stables', 300, () => getJson<{ peggedAssets: Asset[] }>('https://stablecoins.llama.fi/stablecoins?includePrices=true', 10_000));
     const usd = d.peggedAssets.filter((a) => a.pegType === 'peggedUSD');
     const circ = (r: Record<string, number> | undefined) => r?.peggedUSD ?? 0;
     const change = (now: number, prev: number) => (prev ? round(((now - prev) / prev) * 100, 3) : null);
@@ -492,8 +502,10 @@ export const DATA_HANDLERS: Record<string, Handler> = {
     return { stablecoins: rows, depegged: rows.filter((r) => r.depeg).map((r) => r.symbol), source: 'defillama' };
   },
 
-  async chain_tvl(q) {
-    const rows = await getJson<{ name: string; tvl: number; tokenSymbol: string | null; chainId: number | null }[]>('https://api.llama.fi/v2/chains');
+  async chain_tvl(q, env) {
+    const rows = await cached(env, 'llama:chains', 300, () =>
+      getJson<{ name: string; tvl: number; tokenSymbol: string | null; chainId: number | null }[]>('https://api.llama.fi/v2/chains'),
+    );
     const want = q.get('chain')?.toLowerCase();
     const sorted = rows.sort((a, b) => b.tvl - a.tvl).map((r, i) => ({ rank: i + 1, name: r.name, tvlUsd: round(r.tvl, 0), token: r.tokenSymbol, chainId: r.chainId }));
     if (want) {

@@ -8,6 +8,7 @@ import {
   verifyPayment,
   type NonceStore,
   type RouteSpec,
+  type VerifiedPayment,
 } from '@tollgate/core';
 import type { MiddlewareHandler } from 'hono';
 import type { AppEnv } from './env';
@@ -17,6 +18,14 @@ const STATS_TTL_SEC = 60 * 86_400;
 type Store = { bump(key: string, ttlSec: number): Promise<void> };
 /** Daily usage counter, read back via /internal/stats. Never awaited on the hot path's critical result. */
 export const track = (stub: Store, evt: string) => stub.bump(`stat:${new Date().toISOString().slice(0, 10)}:${evt}`, STATS_TTL_SEC).catch(() => {});
+
+/** Permanent ledger of paid calls in D1; the reference is unique, so a replayed write is ignored. */
+const recordSale = (db: D1Database, route: string, p: VerifiedPayment) =>
+  db
+    .prepare('INSERT OR IGNORE INTO sales (ts, route, network, amount_units, payer, reference) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(new Date(p.settledAt).toISOString(), route, p.network, p.amountUnits, p.payer, p.reference)
+    .run()
+    .catch((err) => console.error(JSON.stringify({ evt: 'sale_record_failed', message: String(err) })));
 
 const b64 = (value: unknown) => btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(value))));
 
@@ -73,6 +82,7 @@ export const x402PaymentGate = (route: RouteSpec): MiddlewareHandler<AppEnv> => 
 
   c.set('payment', result.payment);
   c.executionCtx.waitUntil(track(stub, `paid:${route.id}:${result.payment.network}`));
+  if (result.payment.network !== 'simulation') c.executionCtx.waitUntil(recordSale(c.env.SALES, route.id, result.payment));
   const receipt = b64({ success: true, network: result.payment.network, transaction: result.payment.reference, payer: result.payment.payer });
   c.header('PAYMENT-RESPONSE', receipt);
   c.header('X-PAYMENT-RESPONSE', receipt);

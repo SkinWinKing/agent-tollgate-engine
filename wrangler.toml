@@ -38,3 +38,12 @@ class_name = "NonceStore"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["NonceStore"]
+
+[[d1_databases]]
+binding = "SALES"
+database_name = "tollgate-sales"
+database_id = "0423d9bc-9bd5-4f22-ad3b-cb6ac9a1acd0"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "cc15b1fefd7646c18651dd19c1e4702e"
