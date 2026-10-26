@@ -1,10 +1,11 @@
-import { DATA_ROUTES, loadConfig, ROUTES, SOLANA_ADDRESS } from '@tollgate/core';
+import { DATA_ROUTES, loadConfig, ROUTES, SOLANA_ADDRESS, UTIL_ROUTES } from '@tollgate/core';
 import { loadRouterConfig, quoteAndBuild, RouterError } from '@tollgate/omni-router';
 import { Hono } from 'hono';
 import type { AppEnv } from './env';
 import { auditEvmToken, EVM_CHAINS, type EvmChain } from './services/audit-evm';
 import { auditSolanaToken, AuditError } from './services/audit-solana';
 import { DATA_HANDLERS, DataError } from './services/data-tools';
+import { UTIL_HANDLERS } from './services/util-tools';
 import { orderbookImbalance, OrderbookError } from './services/orderbook';
 import { track, x402PaymentGate } from './x402';
 
@@ -47,12 +48,21 @@ routes.use(ROUTES.quote.path, async (c, next) => {
   await next();
 });
 
-for (const route of DATA_ROUTES) {
-  const handler = DATA_HANDLERS[route.id]!;
+const TOOL_HANDLERS = { ...DATA_HANDLERS, ...UTIL_HANDLERS };
+
+for (const route of [...DATA_ROUTES, ...UTIL_ROUTES]) {
+  const handler = TOOL_HANDLERS[route.id]!;
   routes.use(route.path, x402PaymentGate(route));
-  routes.get(route.path, async (c) => {
+  routes.on(route.method, route.path, async (c) => {
+    let params = new URL(c.req.url).searchParams;
+    if (route.method === 'POST') {
+      // POST tools take a JSON body; flatten it so every handler reads one string map.
+      const body = await c.req.json<Record<string, unknown>>().catch(() => null);
+      if (!body || typeof body !== 'object') return c.json({ error: 'INVALID_REQUEST', message: 'JSON object body required' }, 400);
+      params = new URLSearchParams(Object.entries(body).filter(([, v]) => v !== null && v !== undefined).map(([k, v]) => [k, typeof v === 'string' ? v : JSON.stringify(v)]));
+    }
     try {
-      return c.json(await handler(new URL(c.req.url).searchParams, loadConfig(c.env as unknown as Record<string, unknown>)));
+      return c.json(await handler(params, { ...loadConfig(c.env as unknown as Record<string, unknown>), ai: c.env.AI }));
     } catch (err) {
       if (err instanceof DataError) return c.json({ error: 'DATA_ERROR', message: err.message }, err.status as 400);
       return c.json({ error: 'UPSTREAM_ERROR', message: err instanceof Error ? err.message : 'upstream failed' }, 502);

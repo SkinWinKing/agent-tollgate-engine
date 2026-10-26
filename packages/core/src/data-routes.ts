@@ -1,5 +1,6 @@
 import { ROUTES } from './catalog';
 import { usdcToUnits } from './constants';
+import { UTIL_ROUTES } from './util-routes';
 import type { RouteSpec } from './types';
 
 const CHAINS = ['solana', 'ethereum', 'base', 'polygon', 'arbitrum'];
@@ -224,4 +225,4 @@ export const DATA_ROUTES: RouteSpec[] = [
   ),
 ];
 
-export const ALL_ROUTES: RouteSpec[] = [...Object.values(ROUTES), ...DATA_ROUTES];
+export const ALL_ROUTES: RouteSpec[] = [...Object.values(ROUTES), ...DATA_ROUTES, ...UTIL_ROUTES];

@@ -8,3 +8,4 @@ export { signSimulationReceipt } from './sim-verifier';
 export * from './bazaar';
 export { facilitatorSolanaFeePayer } from './facilitator';
 export * from './data-routes';
+export * from './util-routes';

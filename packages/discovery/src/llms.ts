@@ -19,7 +19,7 @@ export function llmsTxt(ctx: DiscoveryContext): string {
   const routes = ALL_ROUTES;
   return `# Agent Tollgate Engine
 
-> Pay-per-call market intelligence and fee-bearing swap routing for autonomous trading agents. No accounts, no API keys: pay in USDC per request using HTTP 402.
+> 50 pay-per-call tools for autonomous agents: crypto market data, token security audits, technical indicators, fee-bearing swap routing, web extraction, DNS/WHOIS/email checks, FX and weather data, and AI (summarize, translate, classify, extract JSON, embeddings, image generation). No accounts, no API keys: pay in USDC per request using HTTP 402.
 
 ## Payment protocol (x402)
 1. Call a paid route without payment. The server answers HTTP 402 with a JSON body listing \`accepts\`: network, asset (USDC), payTo address, maxAmountRequired (base units, 6 decimals) and a nonce.

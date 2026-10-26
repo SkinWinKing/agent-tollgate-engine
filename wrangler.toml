@@ -13,6 +13,9 @@ X402_FACILITATOR_URL = "https://x402.dexter.cash,https://facilitator.payai.netwo
 LIFI_INTEGRATOR = "agent-tollgate"
 JITO_TIP_LAMPORTS = "100000"
 
+[ai]
+binding = "AI"
+
 [observability]
 enabled = true
 
