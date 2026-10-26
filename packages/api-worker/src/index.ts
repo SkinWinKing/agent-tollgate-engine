@@ -1,4 +1,4 @@
-import { loadConfig } from '@tollgate/core';
+import { ALL_ROUTES, loadConfig, unitsToUsdc } from '@tollgate/core';
 import { handleRpc, llmsTxt, openApiSpec, type DiscoveryContext } from '@tollgate/discovery';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -23,6 +23,37 @@ app.get('/health', (c) => c.json({ ok: true }));
 app.get('/', (c) => c.redirect('/llms.txt'));
 app.get('/llms.txt', (c) => c.text(llmsTxt(context(c.env, c.req.url))));
 app.get('/openapi.json', (c) => c.json(openApiSpec(context(c.env, c.req.url))));
+
+// x402 discovery manifest read by crawlers (x402scan, Agent402 index) to list every paid resource.
+app.get('/.well-known/x402', (c) => {
+  const origin = new URL(c.req.url).origin;
+  return c.json({ version: 1, resources: ALL_ROUTES.map((r) => `${origin}${r.path}`) });
+});
+
+// A2A agent card so agent frameworks can discover the tools without knowing x402.
+app.get('/.well-known/agent-card.json', (c) => {
+  const origin = new URL(c.req.url).origin;
+  return c.json({
+    protocolVersion: '0.3.0',
+    name: 'Agent Tollgate Engine',
+    description: 'Pay-per-call crypto market data, token security audits, technical indicators and fee-bearing swap routing for autonomous agents. Pay per request in USDC over x402; no account or API key.',
+    url: `${origin}/mcp`,
+    preferredTransport: 'JSONRPC',
+    version: '1.0.0',
+    provider: { organization: 'Agent Tollgate', url: origin },
+    documentationUrl: `${origin}/llms.txt`,
+    capabilities: { streaming: false, pushNotifications: false },
+    defaultInputModes: ['application/json'],
+    defaultOutputModes: ['application/json'],
+    skills: ALL_ROUTES.map((r) => ({
+      id: r.id,
+      name: r.summary,
+      description: `${r.description} Price: ${r.priceUnits === null ? 'free' : `${unitsToUsdc(r.priceUnits)} USDC`} via x402 at ${r.method} ${origin}${r.path}.`,
+      tags: ['x402', 'crypto', r.path.split('/')[3] ?? 'api'],
+    })),
+  });
+});
+app.get('/.well-known/agent.json', (c) => c.redirect('/.well-known/agent-card.json', 301));
 
 app.get('/mcp', (c) => c.body(null, 405, { Allow: 'POST' }));
 
