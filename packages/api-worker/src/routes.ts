@@ -62,7 +62,7 @@ for (const route of [...DATA_ROUTES, ...UTIL_ROUTES]) {
       params = new URLSearchParams(Object.entries(body).filter(([, v]) => v !== null && v !== undefined).map(([k, v]) => [k, typeof v === 'string' ? v : JSON.stringify(v)]));
     }
     try {
-      return c.json(await handler(params, { ...loadConfig(c.env as unknown as Record<string, unknown>), ai: c.env.AI, cache: c.env.CACHE }));
+      return c.json(await handler(params, { ...loadConfig(c.env as unknown as Record<string, unknown>), ai: c.env.AI, cache: c.env.CACHE, intel: { account: c.env.CF_ACCOUNT_ID ?? '', token: c.env.CF_INTEL_TOKEN ?? '' } }));
     } catch (err) {
       if (err instanceof DataError) return c.json({ error: 'DATA_ERROR', message: err.message }, err.status as 400);
       return c.json({ error: 'UPSTREAM_ERROR', message: err instanceof Error ? err.message : 'upstream failed' }, 502);

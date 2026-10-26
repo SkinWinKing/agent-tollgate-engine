@@ -15,6 +15,7 @@ PAYMENT_MAX_AGE_SEC = "900"
 X402_FACILITATOR_URL = "https://x402.dexter.cash,https://facilitator.payai.network"
 LIFI_INTEGRATOR = "agent-tollgate"
 JITO_TIP_LAMPORTS = "100000"
+CF_ACCOUNT_ID = "c61e27ee2c91de3d62296679174be03d"
 
 [ai]
 binding = "AI"

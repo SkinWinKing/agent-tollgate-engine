@@ -115,6 +115,14 @@ export const UTIL_ROUTES: RouteSpec[] = [
     },
     ['url'], { url: 'https://www.gstatic.com/webp/gallery/1.jpg', width: 200, format: 'webp' }, { contentType: 'image/webp', bytes: 7682, transformed: true, image: 'data:image/webp;base64,...' }),
 
+  tool('domain_reputation', 'GET', 'web/domain-reputation', 0.003, 'Is this domain safe? Phishing, malware and new-domain check',
+    'Threat verdict for a domain before an agent visits a link, signs a transaction or pays an invoice: Cloudflare risk types and content categories, popularity rank, recent URL-scanner verdicts and registration age. Returns clean, suspicious or malicious with flags.',
+    { domain: str('Domain name, e.g. paypa1-login.com') }, ['domain'], { domain: 'coinbase.com' },
+    { domain: 'coinbase.com', verdict: 'clean', application: 'Coinbase', categories: ['Cryptocurrency'] }),
+  tool('ip_reputation', 'GET', 'web/ip-reputation', 0.002, 'IP intelligence: ASN, country, Tor/VPN/proxy flags',
+    'Who owns an IP and whether it is on threat or anonymizer lists (Tor exits and others), with ASN, network type, country and reverse DNS.',
+    { ip: str('IPv4 or IPv6 address') }, ['ip'], { ip: '185.220.101.1' }, { asn: 60729, country: 'DE', isTor: true, verdict: 'flagged' }),
+
   // ---- AI (Workers AI) ----------------------------------------------------
   tool('ai_summarize', 'POST', 'ai/summarize', 0.01, 'Summarize text into a short summary and key points',
     'LLM summary of long text: a concise summary in the requested length and language plus bullet key points.',

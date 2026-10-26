@@ -2,7 +2,21 @@ import { DataError, type DataEnv } from './data-tools';
 
 export interface UtilEnv extends DataEnv {
   ai: Ai;
+  intel: { account: string; token: string };
 }
+
+async function cfIntel<T>(env: UtilEnv, path: string): Promise<T | null> {
+  if (!env.intel.token) throw new DataError('Threat intel not configured', 503);
+  const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${env.intel.account}/${path}`, {
+    signal: AbortSignal.timeout(8000),
+    headers: { authorization: `Bearer ${env.intel.token}` },
+  });
+  if (!res.ok) return null;
+  const body = (await res.json()) as { result?: T; results?: T };
+  return (body.result ?? body.results ?? null) as T | null;
+}
+
+const IPV4 = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/;
 
 type Handler = (q: URLSearchParams, env: UtilEnv) => Promise<Record<string, unknown>>;
 
@@ -679,6 +693,68 @@ export const UTIL_HANDLERS: Record<string, Handler> = {
     let bin = '';
     for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
     return { contentType: type, bytes: buf.byteLength, transformed: res.headers.has('cf-resized'), image: `data:${type};base64,${btoa(bin)}` };
+  },
+
+  async domain_reputation(q, env) {
+    const domain = domainParam(q);
+    type Cat = { id: number; name: string };
+    type Intel = { popularity_rank?: number; application?: { name?: string }; content_categories?: Cat[]; inherited_content_categories?: Cat[]; risk_types?: Cat[]; inherited_risk_types?: Cat[] };
+    type Scan = { task: { time: string; url: string }; verdicts: { malicious: boolean }; result: string };
+    const [intel, scans, rdap] = await Promise.all([
+      cfIntel<Intel>(env, `intel/domain?domain=${domain}`),
+      cfIntel<Scan[]>(env, `urlscanner/v2/search?q=page.domain:${encodeURIComponent(domain)}&size=10`),
+      getJson<{ events?: { eventAction: string; eventDate: string }[] }>(`https://rdap.org/domain/${domain}`, { headers: { accept: 'application/rdap+json' } }).catch(() => null),
+    ]);
+    const created = rdap?.events?.find((e) => e.eventAction === 'registration')?.eventDate ?? null;
+    const ageDays = created ? Math.floor((Date.now() - Date.parse(created)) / 86_400_000) : null;
+    const categories = [...(intel?.content_categories ?? []), ...(intel?.inherited_content_categories ?? [])].map((c) => c.name);
+    const risks = [...(intel?.risk_types ?? []), ...(intel?.inherited_risk_types ?? [])].map((c) => c.name);
+    const maliciousScans = (scans ?? []).filter((s) => s.verdicts?.malicious);
+    const flags: string[] = [];
+    if (risks.length) flags.push(...risks.map((r) => `RISK:${r}`));
+    if (maliciousScans.length) flags.push(`MALICIOUS_SCANS:${maliciousScans.length}`);
+    if (ageDays !== null && ageDays < 30) flags.push('NEWLY_REGISTERED');
+    if (!intel?.popularity_rank && !categories.length) flags.push('UNKNOWN_TO_CLOUDFLARE');
+    const verdict = risks.length || maliciousScans.length ? 'malicious' : flags.length ? 'suspicious' : 'clean';
+    return {
+      domain,
+      verdict,
+      flags,
+      popularityRank: intel?.popularity_rank ?? null,
+      application: intel?.application?.name ?? null,
+      categories: [...new Set(categories)],
+      riskTypes: [...new Set(risks)],
+      registered: created,
+      ageDays,
+      recentScans: (scans ?? []).slice(0, 5).map((s) => ({ time: s.task.time, url: s.task.url, malicious: s.verdicts?.malicious ?? false, report: s.result })),
+      source: 'Cloudflare threat intelligence, URL scanner, RDAP',
+    };
+  },
+
+  async ip_reputation(q, env) {
+    const ip = need(q, 'ip', 45).trim();
+    const v6 = ip.includes(':');
+    if (!v6 && !IPV4.test(ip)) throw new DataError('ip must be an IPv4 or IPv6 address', 400);
+    type IpIntel = { belongs_to_ref?: { value: number; country: string; description: string; type: string }; ip_lists?: string[] | null; ptr_lookup?: { ptr_domains?: string[] }; iana_reservations?: unknown[] };
+    const r = await cfIntel<IpIntel[]>(env, `intel/ip?${v6 ? 'ipv6' : 'ipv4'}=${encodeURIComponent(ip)}`);
+    const d = r?.[0];
+    if (!d) throw new DataError('No data for this IP', 404);
+    const lists = d.ip_lists ?? [];
+    const reserved = (d.iana_reservations ?? []).length > 0;
+    return {
+      ip,
+      asn: d.belongs_to_ref?.value ?? null,
+      network: d.belongs_to_ref?.description ?? null,
+      networkType: d.belongs_to_ref?.type ?? null,
+      country: d.belongs_to_ref?.country ?? null,
+      lists,
+      ptr: d.ptr_lookup?.ptr_domains ?? [],
+      reserved,
+      isTor: lists.includes('tor'),
+      isAnonymizer: lists.some((l) => /tor|vpn|proxy|anonym/i.test(l)),
+      verdict: reserved ? 'reserved' : lists.length ? 'flagged' : 'no_known_flags',
+      source: 'Cloudflare threat intelligence',
+    };
   },
 
   async ai_summarize(q, env) {
