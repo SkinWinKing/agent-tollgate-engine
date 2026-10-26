@@ -134,6 +134,13 @@ app.get('/internal/tool/:id', async (c) => {
 
 app.route('/', routes);
 
+// Crawlers still remember the old SkinWinKing shop; send them to the agent-readable catalog instead of a 404.
+const OLD_SHOP = /^\/(checkout|products?|catalog|cart|shop|category|categories|account|login|register|privacy|terms|faq|about|contact|blog)(\/|$)/i;
+app.notFound((c) => {
+  if (c.req.method === 'GET' && OLD_SHOP.test(c.req.path)) return c.redirect('/llms.txt', 301);
+  return c.json({ error: 'NOT_FOUND', message: 'See /llms.txt for the list of tools' }, 404);
+});
+
 app.onError((err, c) => {
   console.error(err);
   return c.json({ error: 'INTERNAL_ERROR', message: 'Unexpected failure' }, 500);
