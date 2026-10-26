@@ -12,19 +12,11 @@ import {
 import type { MiddlewareHandler } from 'hono';
 import type { AppEnv } from './env';
 
-export const FREE_TRIAL_PER_DAY = 3;
-// Caps free answers across all callers so IP rotation cannot drain RPC quotas.
-export const FREE_TRIAL_GLOBAL_PER_DAY = 100;
 const STATS_TTL_SEC = 60 * 86_400;
 
 type Store = { bump(key: string, ttlSec: number): Promise<void> };
 /** Daily usage counter, read back via /internal/stats. Never awaited on the hot path's critical result. */
 export const track = (stub: Store, evt: string) => stub.bump(`stat:${new Date().toISOString().slice(0, 10)}:${evt}`, STATS_TTL_SEC).catch(() => {});
-
-// Marks requests dispatched in-process by our own /mcp handler. Random per isolate, created lazily
-// because Workers forbid random values at global scope; never leaves the Worker.
-let mcpToken: string | undefined;
-export const internalMcpToken = () => (mcpToken ??= crypto.randomUUID());
 
 const b64 = (value: unknown) => btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(value))));
 
@@ -70,20 +62,6 @@ export const x402PaymentGate = (route: RouteSpec): MiddlewareHandler<AppEnv> => 
   const proof = extractProof(c.req.raw.headers);
   const stub = c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global'));
 
-  // MCP clients (Claude, Cursor, rankers) usually have no wallet: give them a few real answers per day
-  // so they can see the value. Direct HTTP stays strictly 402 for x402 indexers.
-  if (!proof && c.req.header('x-tollgate-mcp') === internalMcpToken()) {
-    const ip = c.req.header('cf-connecting-ip') ?? 'unknown';
-    const day = Math.floor(Date.now() / 86_400_000);
-    if (
-      (await stub.hit(`free:${route.id}:${ip}:${day}`, FREE_TRIAL_PER_DAY, 2 * 86_400)) &&
-      (await stub.hit(`free:global:${day}`, FREE_TRIAL_GLOBAL_PER_DAY, 2 * 86_400))
-    ) {
-      c.header('X-Free-Trial', '1');
-      c.executionCtx.waitUntil(track(stub, `free:${route.id}`));
-      return next();
-    }
-  }
   if (!proof) {
     c.executionCtx.waitUntil(track(stub, `402:${route.id}`));
     return challenge('PAYMENT_REQUIRED', true);

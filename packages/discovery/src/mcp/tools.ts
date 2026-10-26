@@ -14,8 +14,6 @@ interface ToolDef {
   route: RouteSpec;
 }
 
-const FREE = 3;
-
 const proofProperty = {
   paymentProof: {
     type: 'string',
@@ -32,13 +30,13 @@ const withProof = (route: RouteSpec) => {
 export const TOOLS: ToolDef[] = [
   {
     name: 'orderbook_imbalance',
-    description: `${ROUTES.orderbook.description} First ${FREE} calls per day free, then 0.02 USDC per call via x402.`,
+    description: `${ROUTES.orderbook.description} 0.02 USDC per call via x402.`,
     inputSchema: withProof(ROUTES.orderbook),
     route: ROUTES.orderbook,
   },
   {
     name: 'token_audit',
-    description: `Rug-pull / honeypot check before you buy a token. ${ROUTES.tokenAudit.description} First ${FREE} calls per day free, then 0.20 USDC per call via x402.`,
+    description: `Rug-pull / honeypot check before you buy a token. ${ROUTES.tokenAudit.description} 0.20 USDC per call via x402.`,
     inputSchema: withProof(ROUTES.tokenAudit),
     route: ROUTES.tokenAudit,
   },
@@ -70,9 +68,6 @@ export async function callTool(name: string, args: Record<string, unknown>, disp
     });
   }
   const text = await res.text();
-  if (res.headers.get('x-free-trial')) {
-    return { content: [{ type: 'text', text: `Free trial call (${FREE}/day). After that pay via x402 and pass paymentProof.\n${text}` }] };
-  }
   if (res.status === 402) {
     return { content: [{ type: 'text', text: `HTTP 402 Payment Required. Pay as instructed, then retry with paymentProof.\n${text}` }] };
   }
