@@ -73,6 +73,14 @@ app.get('/.well-known/agent-card.json', (c) => {
     })),
   });
 });
+// AI crawlers and agents are the customers here: invite them in and point them at the machine-readable docs.
+app.get('/robots.txt', (c) => {
+  const origin = new URL(c.req.url).origin;
+  return c.text(
+    `User-agent: *\nContent-Signal: search=yes, ai-input=yes, ai-train=yes\nAllow: /\nDisallow: /internal/\n\n# Pay-per-call tools for AI agents (x402). Start here:\n# ${origin}/llms.txt\n# ${origin}/openapi.json\n# ${origin}/.well-known/x402\n# MCP: ${origin}/mcp\n`,
+  );
+});
+
 // RFC 9116 contact for vulnerability reports.
 app.get('/.well-known/security.txt', (c) => {
   const expires = new Date(Date.now() + 180 * 86_400_000).toISOString();
