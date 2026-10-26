@@ -6,6 +6,7 @@ export interface WorkerEnv {
   AI: Ai;
   SALES: D1Database;
   CACHE: KVNamespace;
+  EVENTS: AnalyticsEngineDataset;
   MERCHANT_PAYOUT_ADDRESS_SOL: string;
   MERCHANT_PAYOUT_ADDRESS_EVM: string;
   SOLANA_RPC_URL?: string;

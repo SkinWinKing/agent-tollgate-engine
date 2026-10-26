@@ -17,6 +17,26 @@ const context = (env: AppEnv['Bindings'], url: string): DiscoveryContext => {
 };
 
 const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0b1220"/><path d="M14 44V28l18-12 18 12v16" fill="none" stroke="#4ade80" stroke-width="5" stroke-linejoin="round"/><path d="M24 44V34h16v10" fill="none" stroke="#4ade80" stroke-width="5" stroke-linejoin="round"/></svg>`;
+// One Analytics Engine point per tool call: which tools agents ask for, how often they pay, from where.
+const ROUTE_BY_PATH = new Map(ALL_ROUTES.map((r) => [r.path, r.id]));
+app.use('/api/v1/*', async (c, next) => {
+  const started = Date.now();
+  await next();
+  const status = c.res.status;
+  const outcome = status === 402 ? 'payment_required' : status < 300 ? 'paid' : status === 429 ? 'rate_limited' : status < 500 ? 'client_error' : 'server_error';
+  const ua = (c.req.header('user-agent') ?? 'none').split(/[\s/;(]/)[0]!.slice(0, 40);
+  const source = c.req.header('x-tollgate-source') ?? 'http';
+  try {
+    c.env.EVENTS.writeDataPoint({
+      indexes: [ROUTE_BY_PATH.get(c.req.path) ?? 'unknown'],
+      blobs: [ROUTE_BY_PATH.get(c.req.path) ?? c.req.path.slice(0, 80), outcome, String((c.req.raw.cf as { country?: string } | undefined)?.country ?? 'XX'), ua, source],
+      doubles: [status, Date.now() - started],
+    });
+  } catch {
+    // Analytics must never break a paid response.
+  }
+});
+
 app.get('/favicon.ico', (c) => c.body(FAVICON, 200, { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' }));
 app.get('/favicon.svg', (c) => c.body(FAVICON, 200, { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' }));
 app.get('/health', (c) => c.json({ ok: true }));
@@ -63,6 +83,7 @@ app.post('/mcp', async (c) => {
   const dispatch = async (path: string, init?: RequestInit) => {
     const headers = new Headers(init?.headers);
     headers.set('cf-connecting-ip', c.req.header('cf-connecting-ip') ?? 'unknown');
+    headers.set('x-tollgate-source', 'mcp');
     return app.fetch(new Request(new URL(path, c.req.url), { ...init, headers }), c.env, c.executionCtx);
   };
   const response = await handleRpc(msg, dispatch);
