@@ -20,10 +20,23 @@ interface Receipt {
   logs: { address: string; topics: string[]; data: string }[];
 }
 
+/** rpcUrl may be a comma-separated list; each call falls through to the next URL on an RPC error. */
+async function rpc<T>(urls: string, method: string, params: unknown[]): Promise<T> {
+  let last: unknown;
+  for (const url of urls.split(',').map((u) => u.trim()).filter(Boolean)) {
+    try {
+      return await jsonRpc<T>(url, method, params);
+    } catch (err) {
+      last = err;
+    }
+  }
+  throw last;
+}
+
 const padAddress = (addr: string) => '0x' + addr.slice(2).toLowerCase().padStart(64, '0');
 
 export async function verifyEvmPayment(cfg: CoreConfig, chain: EvmChain, hash: string, minUnits: number): Promise<VerifyResult> {
-  const receipt = await jsonRpc<Receipt | null>(chain.rpcUrl, 'eth_getTransactionReceipt', [hash]);
+  const receipt = await rpc<Receipt | null>(chain.rpcUrl, 'eth_getTransactionReceipt', [hash]);
   if (!receipt) return { ok: false, reason: 'TX_NOT_FOUND_OR_PENDING', retryable: true };
   if (receipt.status !== '0x1') return { ok: false, reason: 'TX_REVERTED', retryable: false };
 
@@ -39,8 +52,8 @@ export async function verifyEvmPayment(cfg: CoreConfig, chain: EvmChain, hash: s
   if (received < BigInt(minUnits)) return { ok: false, reason: 'AMOUNT_TOO_LOW', retryable: false };
 
   const [head, block] = await Promise.all([
-    jsonRpc<string>(chain.rpcUrl, 'eth_blockNumber', []),
-    jsonRpc<{ timestamp: string }>(chain.rpcUrl, 'eth_getBlockByNumber', [receipt.blockNumber, false]),
+    rpc<string>(chain.rpcUrl, 'eth_blockNumber', []),
+    rpc<{ timestamp: string }>(chain.rpcUrl, 'eth_getBlockByNumber', [receipt.blockNumber, false]),
   ]);
   const confirmations = Number(BigInt(head) - BigInt(receipt.blockNumber)) + 1;
   if (confirmations < cfg.minConfirmations) return { ok: false, reason: 'INSUFFICIENT_CONFIRMATIONS', retryable: true };
