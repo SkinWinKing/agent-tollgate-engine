@@ -1,5 +1,5 @@
 name = "tollgate-egress"
 main = "index.ts"
 compatibility_date = "2025-09-01"
-workers_dev = false
+workers_dev = true
 preview_urls = false

@@ -13,10 +13,11 @@ const app = new Hono<AppEnv>();
 /*
  * Subrequests from the skinwinking.com custom domain to some origins outside Cloudflare (GitHub, open-meteo,
  * Wikipedia, alternative.me, PayAI) fail with a Cloudflare 525, while the same fetch from a Worker without the
- * zone context succeeds. Retry those once through the private tollgate-egress Worker (service binding only).
+ * zone context succeeds (a service binding inherits the zone context, so it does not help). Retry those once through
+ * the tollgate-egress Worker on workers.dev, authenticated with a shared secret.
  */
 const nativeFetch = globalThis.fetch.bind(globalThis);
-let egress: Fetcher | undefined;
+let egress: { url: string; token: string } | undefined;
 globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const res = await nativeFetch(input, init);
   if (res.status !== 525 || !egress) return res;
@@ -25,11 +26,12 @@ globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = input instanceof Request ? input.url : String(input);
   const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
   headers.set('x-egress-url', url);
-  return egress.fetch('https://egress.internal/', { method: init?.method ?? (input instanceof Request ? input.method : 'GET'), headers, body: init?.body ?? undefined, signal: init?.signal ?? undefined });
+  headers.set('x-egress-token', egress.token);
+  return nativeFetch(egress.url, { method: init?.method ?? (input instanceof Request ? input.method : 'GET'), headers, body: init?.body ?? undefined, signal: init?.signal ?? undefined });
 }) as typeof fetch;
 
 app.use('*', async (c, next) => {
-  egress ??= c.env.EGRESS;
+  if (!egress && c.env.EGRESS_URL && c.env.EGRESS_TOKEN) egress = { url: c.env.EGRESS_URL, token: c.env.EGRESS_TOKEN };
   await next();
 });
 

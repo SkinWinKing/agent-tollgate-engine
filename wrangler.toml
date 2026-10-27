@@ -16,6 +16,7 @@ X402_FACILITATOR_URL = "https://x402.dexter.cash,https://facilitator.payai.netwo
 LIFI_INTEGRATOR = "agent-tollgate"
 JITO_TIP_LAMPORTS = "100000"
 CF_ACCOUNT_ID = "c61e27ee2c91de3d62296679174be03d"
+EGRESS_URL = "https://tollgate-egress.marculini1312.workers.dev/"
 
 [ai]
 binding = "AI"
@@ -52,7 +53,3 @@ id = "cc15b1fefd7646c18651dd19c1e4702e"
 [[analytics_engine_datasets]]
 binding = "EVENTS"
 dataset = "tollgate_events"
-
-[[services]]
-binding = "EGRESS"
-service = "tollgate-egress"
