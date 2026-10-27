@@ -189,7 +189,13 @@ export const BATCH2_HANDLERS: Record<string, Handler> = {
   },
   async crypto_global(_q, env) {
     type G = { data: { total_market_cap: Record<string, number>; total_volume: Record<string, number>; market_cap_percentage: Record<string, number>; market_cap_change_percentage_24h_usd: number; active_cryptocurrencies: number; markets: number } };
-    const d = (await cached(env, 'cg:global', 120, () => getJson<G>('https://api.coingecko.com/api/v3/global'))).data;
+    const d = await cached(env, 'cg:global', 120, () => getJson<G>('https://api.coingecko.com/api/v3/global'))
+      .then((g) => g.data)
+      .catch(async () => {
+        // CoinGecko rate-limits shared Cloudflare IPs; CoinPaprika is the fallback.
+        const p = await cached(env, 'cp:global', 120, () => getJson<{ market_cap_usd: number; volume_24h_usd: number; bitcoin_dominance_percentage: number; cryptocurrencies_number: number; market_cap_change_24h: number }>('https://api.coinpaprika.com/v1/global'));
+        return { total_market_cap: { usd: p.market_cap_usd }, total_volume: { usd: p.volume_24h_usd }, market_cap_percentage: { btc: p.bitcoin_dominance_percentage }, market_cap_change_percentage_24h_usd: p.market_cap_change_24h, active_cryptocurrencies: p.cryptocurrencies_number, markets: 0 } as G['data'];
+      });
     const dom = Object.entries(d.market_cap_percentage).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => ({ asset: k.toUpperCase(), pct: round(v, 2) }));
     return { marketCapUsd: Math.round(d.total_market_cap.usd ?? 0), volume24hUsd: Math.round(d.total_volume.usd ?? 0), marketCapChange24hPct: round(d.market_cap_change_percentage_24h_usd, 2), btcDominancePct: round(d.market_cap_percentage.btc ?? 0, 2), ethDominancePct: round(d.market_cap_percentage.eth ?? 0, 2), dominance: dom, activeCryptocurrencies: d.active_cryptocurrencies, markets: d.markets, source: 'CoinGecko' };
   },
@@ -215,14 +221,18 @@ export const BATCH2_HANDLERS: Record<string, Handler> = {
   },
   async top_movers(q, env) {
     type T = { symbol: string; openPrice: string; lastPrice: string; quoteVolume: string }[];
-    const rows = await cached(env, 'bn:mini', 60, () => getJson<T>('https://data-api.binance.vision/api/v3/ticker/24hr?type=MINI', 12_000));
+    const rows = await cached(env, 'bn:mini', 60, () => getJson<T>('https://data-api.binance.vision/api/v3/ticker/24hr?type=MINI', 12_000)).catch(async () => {
+      // Binance blocks some Cloudflare locations; Bybit spot tickers carry the same fields.
+      const b = await cached(env, 'by:spot', 60, () => getJson<{ result: { list: { symbol: string; lastPrice: string; prevPrice24h: string; turnover24h: string }[] } }>('https://api.bybit.com/v5/market/tickers?category=spot'));
+      return b.result.list.map((x) => ({ symbol: x.symbol, openPrice: x.prevPrice24h, lastPrice: x.lastPrice, quoteVolume: x.turnover24h }));
+    });
     const minVol = num(q, 'minVolumeUsd', 5_000_000);
     const lim = int(q, 'limit', 10, 1, 30);
     const list = rows
       .filter((r) => r.symbol.endsWith('USDT') && !/(UP|DOWN|BULL|BEAR)USDT$/.test(r.symbol) && Number(r.quoteVolume) >= minVol && Number(r.openPrice) > 0)
       .map((r) => ({ symbol: r.symbol.replace(/USDT$/, ''), price: Number(r.lastPrice), change24hPct: round(((Number(r.lastPrice) - Number(r.openPrice)) / Number(r.openPrice)) * 100, 2), volume24hUsd: Math.round(Number(r.quoteVolume)) }))
       .sort((a, b) => b.change24hPct - a.change24hPct);
-    return { gainers: list.slice(0, lim), losers: list.slice(-lim).reverse(), universe: list.length, source: 'Binance spot (USDT pairs)' };
+    return { gainers: list.slice(0, lim), losers: list.slice(-lim).reverse(), universe: list.length, source: 'Binance or Bybit spot (USDT pairs)' };
   },
   async fx_history(q) {
     const from = need(q, 'from', 10), to = need(q, 'to', 10);
@@ -274,7 +284,11 @@ export const BATCH2_HANDLERS: Record<string, Handler> = {
     const pair = need(q, 'pair', 20).toUpperCase().replace(/[-/_\s]/g, '');
     if (!/^[A-Z0-9]{5,15}$/.test(pair)) throw new DataError('pair must look like BTC-USDT', 400);
     const amount = num(q, 'amount'), every = int(q, 'everyDays', 7, 1, 90), days = int(q, 'days', 365, 7, 1000);
-    const k = await getJson<string[][]>(`https://data-api.binance.vision/api/v3/klines?symbol=${pair}&interval=1d&limit=${days}`);
+    const k = await getJson<string[][]>(`https://data-api.binance.vision/api/v3/klines?symbol=${pair}&interval=1d&limit=${days}`).catch(async () => {
+      const b = await getJson<{ retCode: number; result: { list: string[][] } }>(`https://api.bybit.com/v5/market/kline?category=spot&symbol=${pair}&interval=D&limit=${days}`);
+      if (b.retCode !== 0) throw new DataError(`No price history for ${pair}`, 404);
+      return b.result.list.reverse();
+    });
     if (!k.length) throw new DataError('No price history', 404);
     let coins = 0, invested = 0, buys = 0;
     for (let i = 0; i < k.length; i += every) { const px = Number(k[i]![4]); coins += amount / px; invested += amount; buys++; }
@@ -571,9 +585,14 @@ export const BATCH2_HANDLERS: Record<string, Handler> = {
   async ip_geolocation(q) {
     const ip = need(q, 'ip', 45).trim();
     if (!/^[0-9a-fA-F:.]{3,45}$/.test(ip)) throw new DataError('invalid IP', 400);
-    const d = await getJson<Record<string, unknown> & { success: boolean; message?: string; connection?: Record<string, unknown>; timezone?: Record<string, unknown> }>(`https://ipwho.is/${ip}`);
-    if (!d.success) throw new DataError(d.message ?? 'lookup failed', 400);
-    return { ip, country: d.country, countryCode: d.country_code, region: d.region, city: d.city, lat: d.latitude, lon: d.longitude, timezone: d.timezone?.id ?? null, isp: d.connection?.isp ?? null, org: d.connection?.org ?? null, asn: d.connection?.asn ?? null, source: 'ipwho.is' };
+    try {
+      const g = await getJson<Record<string, string | number | undefined>>(`https://get.geojs.io/v1/ip/geo/${ip}.json`);
+      return { ip, country: g.country ?? null, countryCode: g.country_code ?? null, region: g.region ?? null, city: g.city ?? null, lat: g.latitude ? Number(g.latitude) : null, lon: g.longitude ? Number(g.longitude) : null, timezone: g.timezone ?? null, isp: g.organization_name ?? null, org: g.organization ?? null, asn: g.asn ?? null, source: 'GeoJS' };
+    } catch {
+      const d = await getJson<Record<string, unknown> & { success: boolean; message?: string; connection?: Record<string, unknown>; timezone?: Record<string, unknown> }>(`https://ipwho.is/${ip}`);
+      if (!d.success) throw new DataError(d.message ?? 'lookup failed', 400);
+      return { ip, country: d.country, countryCode: d.country_code, region: d.region, city: d.city, lat: d.latitude, lon: d.longitude, timezone: d.timezone?.id ?? null, isp: d.connection?.isp ?? null, org: d.connection?.org ?? null, asn: d.connection?.asn ?? null, source: 'ipwho.is' };
+    }
   },
   async url_unshorten(q) {
     let url = publicUrl(need(q, 'url', 4000));
