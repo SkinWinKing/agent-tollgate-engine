@@ -98,7 +98,7 @@ const PAGES: Record<string, { title: string; body: string }> = {
   },
 };
 
-const STYLE = `:root{color-scheme:dark}body{margin:0;background:#000;color:#e9e9ee;font:16px/1.65 'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif}h1,h2,.brand{font-family:'Space Grotesk','Inter',system-ui,sans-serif}
+const STYLE = `:root{color-scheme:dark}body{margin:0;background:#000;color:#e9e9ee;font:16px/1.65 'Exo 2',system-ui,-apple-system,Segoe UI,Roboto,sans-serif}h1,h2,.brand{text-transform:uppercase;letter-spacing:.04em;font-family:'Orbitron','Exo 2',system-ui,sans-serif}
 a{color:#3ab8ff}header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px clamp(16px,3vw,32px);border-bottom:1px solid #1d1d22}
 .brand{display:flex;align-items:center;gap:10px;color:#fff;font-weight:700;text-decoration:none}.brand img{height:32px;width:auto}.brand span{color:#f5c542}
 main{max-width:760px;margin:0 auto;padding:28px 16px 40px}h1{margin:0 0 4px;font-size:clamp(28px,5vw,40px);color:#f5c542}h2{margin:28px 0 8px;font-size:20px;color:#fff}
@@ -115,7 +115,7 @@ const NAV = [
 ];
 
 const page = (slug: string, p: { title: string; body: string }) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${p.title} · SKW Trading Market</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"><link rel="icon" href="/brand/skw-coin.webp" type="image/webp"><link rel="canonical" href="https://skinwinking.com/${slug}"><style>${STYLE}</style></head><body>
+<title>${p.title} · SKW Trading Market</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=Orbitron:wght@500;600;700;800&display=swap"><link rel="icon" href="/brand/skw-coin.webp" type="image/webp"><link rel="canonical" href="https://skinwinking.com/${slug}"><style>${STYLE}</style></head><body>
 <header><a class="brand" href="/"><img src="/brand/skw-coin.webp" alt="SKW" width="36" height="36">SKW <span>Trading Market</span></a><a href="/">← Back to the market</a></header>
 <main><h1>${p.title}</h1><p class="eff">Effective ${EFFECTIVE}</p>${p.body}</main>
 <footer>${NAV.map(([s, t]) => `<a href="/${s}">${t}</a>`).join('')}<div>© 2026 SKW · SkinWinKing · non-custodial</div></footer></body></html>`;
