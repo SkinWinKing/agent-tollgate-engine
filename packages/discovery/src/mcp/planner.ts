@@ -34,6 +34,21 @@ export const WORKFLOWS: Record<string, { title: string; description: string; arg
       { tool: 'wallet_balance', why: 'Native and token balances', input: { chain: '{chain}', address: '{address}' } },
     ],
   },
+  council: {
+    title: 'Council verdict before a trade',
+    description: 'Ask the seven-agent council, check for wash trading and hype, then size the position with Kelly.',
+    args: [
+      { name: 'chain', description: 'Token chain', required: true },
+      { name: 'token', description: 'Token address', required: true },
+      { name: 'bankroll', description: 'Trading bankroll in USD', required: false },
+    ],
+    steps: [
+      { tool: 'council_verdict', why: 'Seven-agent vote with Guardian and Wash Detector vetoes', input: { chain: '{chain}', address: '{token}' } },
+      { tool: 'wash_trading_check', why: 'Detail behind any fake-volume flags', input: { chain: '{chain}', address: '{token}' } },
+      { tool: 'hype_signal', why: 'Attention and timing', input: { chain: '{chain}', address: '{token}' } },
+      { tool: 'kelly_size', why: 'How much to risk if the council says buy', input: { winRate: '0.5', avgWin: '40', avgLoss: '20', bankroll: '{bankroll}', stopLossPct: '20' } },
+    ],
+  },
   market_brief: {
     title: 'Market brief',
     description: 'Price, trend, momentum, derivatives positioning and sentiment for an asset.',
@@ -88,7 +103,8 @@ export function workflowPlan(name: string, args: Record<string, string>) {
 export function planTask(task: string) {
   const t = task.toLowerCase();
   const pick =
-    /(buy|ape|swap|trade).*(token|coin|meme)|rug|honeypot/.test(t) ? 'safe_token_buy'
+    /(council|vote|consensus|should i (buy|trade)|verdict)/.test(t) ? 'council'
+    : /(buy|ape|swap|trade).*(token|coin|meme)|rug|honeypot/.test(t) ? 'safe_token_buy'
     : /(wallet|address).*(check|safe|sanction|who)|sanction|kyc|counterparty/.test(t) ? 'wallet_due_diligence'
     : /(price|market|trend|rsi|macd|funding|sentiment|analy[sz])/.test(t) ? 'market_brief'
     : /(domain|website|site|phish|dns|ssl|certificate|dmarc|spf)/.test(t) ? 'site_recon'

@@ -45,6 +45,8 @@ code{background:#111113;color:var(--gold2);padding:2px 6px;border-radius:6px;fon
 .wbtn img,.wbtn .wi{width:28px;height:28px;border-radius:8px;flex:none;display:grid;place-items:center;font-size:13px;font-weight:800}.wbtn small{margin-left:auto;color:var(--muted);font-weight:500}
 #reso-c{width:100%;height:560px;display:block}.feed{max-height:520px;overflow:auto;font:13px ui-monospace,Menlo,monospace}.feed div{padding:6px 0;border-bottom:1px solid #18181b;display:flex;gap:8px}.feed .t{color:var(--muted)}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+#fsk-c,#dna-c{width:100%;height:230px;display:block}.mand{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.mand canvas{width:100%;height:220px;display:block}
+.fsklog{font:12px ui-monospace,Menlo,monospace;max-height:150px;overflow:auto;margin-top:8px}.fsklog div{padding:3px 0;border-bottom:1px solid #151518}.hz{color:#7df9ff}
 @media(max-width:640px){header{flex-wrap:wrap}.row{grid-template-columns:1fr}}
 </style>
 </head>
@@ -52,7 +54,7 @@ code{background:#111113;color:var(--gold2);padding:2px 6px;border-radius:6px;fon
 <canvas id="bg"></canvas>
 <header>
   <div class="brand"><svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0b0b0d"/><path d="M14 44V28l18-12 18 12v16" fill="none" stroke="#f5c542" stroke-width="5" stroke-linejoin="round"/><path d="M24 44V34h16v10" fill="none" stroke="#d9dde3" stroke-width="5" stroke-linejoin="round"/></svg>Agent Tollgate</div>
-  <nav><button data-t="dash" class="on">Live</button><button data-t="reso">Resonance</button><button data-t="swap">Swap</button><button data-t="tools">Tools</button><button data-t="agents">For agents</button></nav>
+  <nav><button data-t="dash" class="on">Live</button><button data-t="reso">Resonance</button><button data-t="freq">Frequencies</button><button data-t="swap">Swap</button><button data-t="tools">Tools</button><button data-t="agents">For agents</button></nav>
   <div><span id="who"></span> <button class="btn sec" id="connect">Connect wallet</button></div>
 </header>
 <main>
@@ -84,6 +86,17 @@ code{background:#111113;color:var(--gold2);padding:2px 6px;border-radius:6px;fon
     <div class="card"><div class="k">Live signal feed</div><div class="feed" id="feed"><div class="note">Listening for agents…</div></div></div>
   </div>
   <div class="legend"><span><i style="background:#f5c542"></i>paid</span><span><i style="background:#d9dde3"></i>402 payment request</span><span><i style="background:#39ff88"></i>via MCP</span><span><i style="background:#ff4d5e"></i>error</span><span>Ring colour = tool family: data, web, util, ai</span></div>
+</section>
+
+<section id="freq">
+  <div class="hero" style="padding-top:18px"><h1 style="font-size:clamp(24px,4vw,40px)">Agents talk in frequencies</h1><p>Every tool has its own carrier frequency. Each real agent call is encoded as 16-FSK: every byte becomes two tones nine hertz apart, then decoded back to text. Press listen to hear the traffic. A visualization of real requests, not a trading signal.</p></div>
+  <div class="card"><div class="k" style="display:flex;justify-content:space-between;align-items:center"><span>📡 16-FSK agent communication · live <span id="fsk-info" class="note"></span></span><button class="btn sec" id="fsk-snd">🔊 Listen</button></div><canvas id="fsk-c"></canvas><div class="fsklog" id="fsk-log"><div class="note">Waiting for the next agent call…</div></div></div>
+  <div class="card" style="margin-top:14px"><div class="k">🧬 Agent DNA · every base pair is one real call (newest on the right). Base from the carrier frequency, double rung = paid call.</div><canvas id="dna-c"></canvas></div>
+  <div class="mand" style="margin-top:14px">
+    <div class="card"><div class="k">369 Hz · Tesla 3-6-9</div><canvas id="m369"></canvas></div>
+    <div class="card"><div class="k">693 Hz · spiral of inflow</div><canvas id="m693"></canvas></div>
+    <div class="card"><div class="k">936 Hz · crystal of abundance</div><canvas id="m936"></canvas></div>
+  </div>
 </section>
 
 <section id="swap">
@@ -128,7 +141,7 @@ const TOKENS={
 const CHAIN_ID={ethereum:'0x1',base:'0x2105',arbitrum:'0xa4b1',polygon:'0x89'};
 const EXPLORER={solana:'https://solscan.io/tx/',ethereum:'https://etherscan.io/tx/',base:'https://basescan.org/tx/',arbitrum:'https://arbiscan.io/tx/',polygon:'https://polygonscan.com/tx/'};
 let me=null,lastQuote=null;
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,section').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#'+b.dataset.t).classList.add('on');if(b.dataset.t==='reso')dispatchEvent(new Event('resize'))});
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,section').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#'+b.dataset.t).classList.add('on');if(b.dataset.t==='reso'||b.dataset.t==='freq')dispatchEvent(new Event('resize'))});
 
 let energy=0.3;
 function countTo(el,to){const from=Number(el.dataset.v||0),t0=performance.now();el.dataset.v=to;const step=t=>{const k=Math.min(1,(t-t0)/900);el.textContent=fmt(Math.round(from+(to-from)*(1-Math.pow(1-k,3))));if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
@@ -218,7 +231,7 @@ if(navigator.modelContext?.provideContext){navigator.modelContext.provideContext
  const fit=()=>{const r=c.getBoundingClientRect();W=c.width=r.width*devicePixelRatio;H=c.height=560*devicePixelRatio;layout()};
  function layout(){const R=Math.min(W,H)*0.40;nodes=cat.map((t,i)=>{const a=-Math.PI/2+i*2*Math.PI/cat.length,fam=(t.path.split('/')[3]||'core');return{id:t.id,fam:FAM[fam]?fam:'core',x:W/2+Math.cos(a)*R,y:H/2+Math.sin(a)*R,a,f:0.6+(i%9)*0.22,e:0}})}
  fetch('/app/catalog').then(r=>r.json()).then(j=>{cat=j;fit()});addEventListener('resize',()=>{if(cat.length)fit()});
- function pulse(ev){const n=nodes.find(n=>n.id===ev.tool);if(!n)return;const col=ev.source==='mcp'&&ev.outcome==='payment_required'?OUT.mcp:(OUT[ev.outcome]||OUT.payment_required);waves.push({n,col,p:0});
+ function pulse(ev){window.onAgentEvent&&window.onAgentEvent(ev);const n=nodes.find(n=>n.id===ev.tool);if(!n)return;const col=ev.source==='mcp'&&ev.outcome==='payment_required'?OUT.mcp:(OUT[ev.outcome]||OUT.payment_required);waves.push({n,col,p:0});
   const f=$('#feed');if(f.firstChild&&f.firstChild.classList&&f.firstChild.classList.contains('note'))f.innerHTML='';const d=document.createElement('div');d.innerHTML='<span class=t>'+new Date(ev.t).toLocaleTimeString()+'</span><span style="color:rgb('+col+')">●</span><span>'+ev.tool.replace(/_/g,' ')+'</span><span class=t>'+ev.source+' · '+ev.country+'</span>';f.prepend(d);while(f.children.length>40)f.lastChild.remove()}
  async function poll(){try{const r=await (await fetch('/app/events?since='+since)).json();r.events.forEach((e,i)=>setTimeout(()=>pulse(e),i*180));if(r.events.length)since=r.events[r.events.length-1].t}catch(e){}}
  poll();setInterval(poll,4000);
@@ -235,6 +248,46 @@ if(navigator.modelContext?.provideContext){navigator.modelContext.provideContext
    x.strokeStyle='rgba('+FAM[n.fam]+','+(0.18+n.e*0.8)+')';x.lineWidth=(1+n.e*1.5)*d;if(n.e>0.05){x.shadowColor='rgba('+FAM[n.fam]+',1)';x.shadowBlur=18*d*n.e}x.stroke();x.shadowBlur=0;
    if(n.e>0.15){x.fillStyle='rgba(255,255,255,'+n.e+')';x.font=(11*d)+'px system-ui';x.textAlign=Math.cos(n.a)>0?'left':'right';x.fillText(n.id.replace(/_/g,' '),n.x+Math.cos(n.a)*12*d,n.y+Math.sin(n.a)*12*d+4*d)}}
   if(!still||waves.length)requestAnimationFrame(frame);else setTimeout(()=>requestAnimationFrame(frame),500)})()})();
+// Frequencies: 16-FSK encoding of live calls, agent DNA and the 369/693/936 mandalas.
+(function freqs(){const FAMHZ={data:528,web:639,util:417,ai:741,council:963,router:396,alpha:852,security:285,core:369};
+ const carrier=t=>{const fam=(t.path||'').split('/')[3]||'core';let h=0;for(const ch of t.id)h=(h*31+ch.charCodeAt(0))%997;return (FAMHZ[fam]||432)+(h%6)*3};
+ let cat=[];fetch('/app/catalog').then(r=>r.json()).then(j=>cat=j);
+ const F={tones:[],log:[],n:0,snd:false,ac:null,STEP:9},DNA=[];
+ const enc=(hz,txt)=>{const b=new TextEncoder().encode(txt.slice(0,32)),t=[];b.forEach(x=>{t.push(hz+(x>>4)*F.STEP,hz+(x&15)*F.STEP)});return t};
+ const dec=(hz,t)=>{const b=[];for(let i=0;i+1<t.length;i+=2)b.push((Math.round((t[i]-hz)/F.STEP)<<4)|Math.round((t[i+1]-hz)/F.STEP));return new TextDecoder().decode(new Uint8Array(b))};
+ const OUTC={paid:'245,197,66',payment_required:'217,221,227',client_error:'255,77,94',server_error:'255,77,94',rate_limited:'255,176,32'};
+ window.onAgentEvent=ev=>{const t=cat.find(c=>c.id===ev.tool)||{id:ev.tool,path:''};const hz=carrier(t);const msg=ev.tool+':'+(ev.outcome==='paid'?'PAID':'402')+':'+ev.country;
+  const tones=enc(hz,msg),back=dec(hz,tones),ok=back===msg,col=ev.source==='mcp'?'57,255,136':(OUTC[ev.outcome]||'217,221,227');
+  tones.forEach(f=>F.tones.push({f,col}));if(F.tones.length>1400)F.tones.splice(0,F.tones.length-1400);F.n++;
+  const lg=$('#fsk-log');if(lg.firstChild&&lg.firstChild.classList&&lg.firstChild.classList.contains('note'))lg.innerHTML='';
+  const d=document.createElement('div');d.innerHTML='<span class="hz">'+hz+' Hz</span> '+tones.length+' tones → <b>'+back.replace(/</g,'&lt;')+'</b> '+(ok?'<span class=ok>✔</span>':'<span class=bad>✘</span>');lg.prepend(d);while(lg.children.length>30)lg.lastChild.remove();
+  $('#fsk-info').textContent='· '+F.n+' messages encoded';
+  DNA.push({hz,base:'ATGC'[hz%4],col,paid:ev.outcome==='paid',t:performance.now()});if(DNA.length>70)DNA.shift();
+  energy=Math.min(1,energy+0.05);
+  if(F.snd&&F.ac){let t0=F.ac.currentTime+0.02;tones.slice(0,32).forEach(f=>{const o=F.ac.createOscillator(),g=F.ac.createGain();o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(0.06,t0+0.005);g.gain.linearRampToValueAtTime(0,t0+0.055);o.connect(g).connect(F.ac.destination);o.start(t0);o.stop(t0+0.06);t0+=0.06})}};
+ $('#fsk-snd').onclick=e=>{F.snd=!F.snd;if(F.snd&&!F.ac){try{F.ac=new (window.AudioContext||window.webkitAudioContext)()}catch(_){F.snd=false}}e.target.textContent=F.snd?'🔇 Mute':'🔊 Listen'};
+ const fitC=c=>{const r=c.getBoundingClientRect();if(!r.width)return null;const d=devicePixelRatio;if(c.width!==Math.round(r.width*d)){c.width=Math.round(r.width*d);c.height=Math.round(r.height*d)}return {x:c.getContext('2d'),W:c.width,H:c.height,d}};
+ let t=0;
+ function drawFsk(){const g=fitC($('#fsk-c'));if(!g)return;const {x,W,H,d}=g;x.fillStyle='rgba(0,0,0,.35)';x.fillRect(0,0,W,H);
+  const fmin=250,fmax=1150,y=f=>H-10*d-(f-fmin)/(fmax-fmin)*(H-20*d);x.strokeStyle='rgba(217,221,227,.08)';x.lineWidth=1;x.font=(10*d)+'px system-ui';x.fillStyle='rgba(217,221,227,.4)';
+  [285,369,417,528,639,693,741,852,936,963].forEach(f=>{x.beginPath();x.moveTo(0,y(f));x.lineTo(W,y(f));x.stroke();x.fillText(f+' Hz',4*d,y(f)-3*d)});
+  const n=F.tones.length,w=Math.max(1.5*d,W/Math.max(380,n));F.tones.forEach((tn,i)=>{const px=W-(n-i)*w;if(px<0)return;x.fillStyle='rgba('+tn.col+',.9)';x.shadowColor='rgba('+tn.col+',1)';x.shadowBlur=6*d;x.fillRect(px,y(tn.f)-2*d,w,4*d)});x.shadowBlur=0}
+ function drawDna(){const g=fitC($('#dna-c'));if(!g)return;const {x,W,H,d}=g;x.clearRect(0,0,W,H);const n=DNA.length,step=W/72,cy=H/2,amp=H*0.32;
+  for(let k=0;k<2;k++){x.beginPath();for(let px=0;px<=W;px+=4){const ph=px/W*Math.PI*7+t*1.4+k*Math.PI;x.lineTo(px,cy+Math.sin(ph)*amp)}x.strokeStyle=k?'rgba(217,221,227,.55)':'rgba(245,197,66,.7)';x.lineWidth=2*d;x.stroke()}
+  DNA.forEach((b,i)=>{const px=W-(n-i)*step-step/2;if(px<0)return;const ph=px/W*Math.PI*7+t*1.4,y1=cy+Math.sin(ph)*amp,y2=cy+Math.sin(ph+Math.PI)*amp,age=Math.min(1,(performance.now()-b.t)/600);
+   x.strokeStyle='rgba('+b.col+','+(0.35+0.6*age)+')';x.lineWidth=(b.paid?3:1.6)*d;x.shadowColor='rgba('+b.col+',1)';x.shadowBlur=(i===n-1?16:6)*d;x.beginPath();x.moveTo(px,y1);x.lineTo(px,y2);x.stroke();
+   if(b.paid){x.beginPath();x.moveTo(px+3*d,y1);x.lineTo(px+3*d,y2);x.stroke()}x.shadowBlur=0;x.fillStyle='rgba(255,255,255,.85)';x.font=(9*d)+'px ui-monospace';x.textAlign='center';x.fillText(b.base,px,Math.min(y1,y2)-6*d)})}
+ function mand(id,hz,fn){const g=fitC($(id));if(!g)return;const {x,W,H,d}=g;x.clearRect(0,0,W,H);x.save();x.translate(W/2,H/2);fn(x,Math.min(W,H)*0.4,d,t*(hz/600)*(0.6+energy));x.restore()}
+ const glow=(x,c,d)=>{x.strokeStyle=c;x.shadowColor=c;x.shadowBlur=12*d;x.lineWidth=1.6*d};
+ function m369(x,R,d,tt){glow(x,'rgba(245,197,66,.9)',d);[3,6,9].forEach((k,i)=>{const r=R*(0.35+i*0.22)*(1+Math.sin(tt*k)*0.04*(1+energy));x.beginPath();for(let a=0;a<=Math.PI*2+0.01;a+=0.03){const rr=r+Math.sin(a*k+tt*2)*R*0.05;x.lineTo(Math.cos(a)*rr,Math.sin(a)*rr)}x.stroke()});
+  for(let i=0;i<9;i++){const a=i/9*Math.PI*2+tt*0.3;x.beginPath();x.arc(Math.cos(a)*R*0.79,Math.sin(a)*R*0.79,2.5*d,0,7);x.fillStyle='#fff';x.fill()}}
+ function m693(x,R,d,tt){glow(x,'rgba(217,221,227,.85)',d);for(let arm=0;arm<3;arm++){x.beginPath();for(let s=0;s<=1;s+=0.005){const a=s*Math.PI*6+arm*Math.PI*2/3-tt*1.2,r=R*(1-s)*(0.9+0.1*Math.sin(tt*3));x.lineTo(Math.cos(a)*r,Math.sin(a)*r)}x.stroke()}
+  x.beginPath();x.arc(0,0,R*0.08*(1+energy),0,7);x.fillStyle='rgba(255,223,126,.9)';x.fill()}
+ function m936(x,R,d,tt){glow(x,'rgba(125,249,255,.85)',d);const pts=[];for(let i=0;i<12;i++){const ph=Math.acos(1-2*(i+0.5)/12),th=Math.PI*(1+Math.sqrt(5))*i+tt;pts.push([Math.sin(ph)*Math.cos(th),Math.cos(ph),Math.sin(ph)*Math.sin(th)])}
+  const P=pts.map(([a,b,c])=>{const cs=Math.cos(tt*0.7),sn=Math.sin(tt*0.7),y2=b*cs-c*sn;return [a*R*0.85,y2*R*0.85]});for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){const dx=P[i][0]-P[j][0],dy=P[i][1]-P[j][1];if(Math.hypot(dx,dy)<R*1.05){x.beginPath();x.moveTo(P[i][0],P[i][1]);x.lineTo(P[j][0],P[j][1]);x.stroke()}}}
+ const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ (function frame(){if($('#freq').classList.contains('on')){t+=0.016;drawFsk();drawDna();mand('#m369',369,m369);mand('#m693',693,m693);mand('#m936',936,m936)}energy*=0.999;requestAnimationFrame(frame)})();
+ if(still)t=1})();
 fillTokens();loadStats();loadMarket();loadCatalog();setInterval(loadStats,30000);setInterval(loadMarket,60000);
 fetch('/auth/me').then(r=>r.ok?r.json():null).then(m=>{me=m;showMe()});
 </script>

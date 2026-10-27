@@ -5,6 +5,7 @@ import type { AppEnv } from './env';
 import { auditEvmToken, EVM_CHAINS, type EvmChain } from './services/audit-evm';
 import { auditSolanaToken, AuditError } from './services/audit-solana';
 import { DATA_HANDLERS, DataError } from './services/data-tools';
+import { COUNCIL_HANDLERS } from './services/council-tools';
 import { MORE_HANDLERS } from './services/more-tools';
 import { UTIL_HANDLERS } from './services/util-tools';
 import { orderbookImbalance, OrderbookError } from './services/orderbook';
@@ -49,7 +50,7 @@ routes.use(ROUTES.quote.path, async (c, next) => {
   await next();
 });
 
-export const TOOL_HANDLERS = { ...DATA_HANDLERS, ...UTIL_HANDLERS, ...MORE_HANDLERS };
+export const TOOL_HANDLERS = { ...DATA_HANDLERS, ...UTIL_HANDLERS, ...MORE_HANDLERS, ...COUNCIL_HANDLERS };
 
 for (const route of [...DATA_ROUTES, ...UTIL_ROUTES]) {
   const handler = TOOL_HANDLERS[route.id]!;
