@@ -75,6 +75,12 @@ webApp.get('/app/stats', async (c) => {
   );
 });
 
+webApp.get('/app/events', async (c) => {
+  const since = Number(c.req.query('since') ?? 0) || 0;
+  const stub = c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global'));
+  return c.json({ now: Date.now(), events: await stub.recentEvents(since) }, 200, { 'cache-control': 'no-store' });
+});
+
 webApp.get('/app/market', async (c) => {
   const env = toolEnv(c);
   const [fng, prices] = await Promise.all([
