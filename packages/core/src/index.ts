@@ -10,3 +10,5 @@ export { facilitatorSolanaFeePayer } from './facilitator';
 export * from './data-routes';
 export * from './util-routes';
 export * from './batch2-routes';
+export { verifySolanaPayment } from './solana-verifier';
+export { evmChains, verifyEvmPayment } from './evm-verifier';

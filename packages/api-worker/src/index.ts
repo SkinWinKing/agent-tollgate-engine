@@ -7,6 +7,7 @@ import { discovery } from './agent-discovery';
 import { auth } from './auth';
 import { routes, TOOL_HANDLERS } from './routes';
 import { trade } from './trade';
+import { apiKeyFrom, apiKeys } from './api-keys';
 import { legal } from './legal';
 import { serveApp, webApp } from './web-app';
 
@@ -95,6 +96,7 @@ app.get('/', (c) => {
   return c.redirect('/llms.txt');
 });
 app.route('/', auth);
+app.route('/', apiKeys);
 app.route('/', legal);
 app.route('/', webApp);
 app.route('/', trade);
@@ -159,6 +161,8 @@ app.post('/mcp', async (c) => {
     const headers = new Headers(init?.headers);
     headers.set('cf-connecting-ip', c.req.header('cf-connecting-ip') ?? 'unknown');
     headers.set('x-tollgate-source', 'mcp');
+    const key = apiKeyFrom(c.req.raw.headers);
+    if (key && !apiKeyFrom(headers)) headers.set('x-api-key', key);
     return app.fetch(new Request(new URL(path, c.req.url), { ...init, headers }), c.env, c.executionCtx);
   };
   const response = await handleRpc(msg, dispatch);

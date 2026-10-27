@@ -11,6 +11,7 @@ import {
   type VerifiedPayment,
 } from '@tollgate/core';
 import type { MiddlewareHandler } from 'hono';
+import { apiKeyFrom, checkApiKey } from './api-keys';
 import type { AppEnv } from './env';
 
 const STATS_TTL_SEC = 60 * 86_400;
@@ -30,6 +31,12 @@ const recordSale = (db: D1Database, route: string, p: VerifiedPayment) =>
 const b64 = (value: unknown) => btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(value))));
 
 export const x402PaymentGate = (route: RouteSpec): MiddlewareHandler<AppEnv> => async (c, next) => {
+  const apiKey = apiKeyFrom(c.req.raw.headers);
+  if (apiKey) {
+    const denied = await checkApiKey(c, route, apiKey);
+    if (denied) return denied;
+    return next();
+  }
   const cfg = loadConfig(c.env as unknown as Record<string, unknown>);
   const resource = new URL(c.req.url).toString();
   const requirements = buildRequirements(cfg, route, resource, await facilitatorSolanaFeePayer(cfg));

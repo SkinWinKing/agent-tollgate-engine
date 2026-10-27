@@ -60,8 +60,9 @@ html{scroll-behavior:smooth}.fxg{display:grid;gap:12px;grid-template-columns:rep
 .card{border-radius:16px!important}.thead .px{font-size:34px;letter-spacing:-.02em;background:linear-gradient(90deg,#fff,#ffdf7e);-webkit-background-clip:text;background-clip:text;color:transparent}
 .mk table tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--up)}.grid{gap:16px}
 .brand img{height:40px;width:auto;filter:drop-shadow(0 0 8px rgba(245,197,66,.35))}.brand span{color:var(--gold2)}a.brand{text-decoration:none}
-.home{padding:28px 0 10px}.crest{width:min(420px,78vw);height:auto;display:block;margin:0 auto 6px;filter:drop-shadow(0 0 40px rgba(245,197,66,.35));animation:float 6s ease-in-out infinite}
+.home{padding:48px 0 10px}.crest{width:min(420px,78vw);height:auto;display:block;margin:0 auto 6px;filter:drop-shadow(0 0 40px rgba(245,197,66,.35));animation:float 6s ease-in-out infinite}
 @keyframes float{50%{transform:translateY(-8px)}}.home h1 small{display:block;font-size:.5em;letter-spacing:.06em;margin-top:6px}
+.plans .card{display:flex;flex-direction:column;gap:6px}.plans .card.cur{box-shadow:0 0 0 1px var(--acc),0 0 30px rgba(245,197,66,.25)}.plans .pr{font:800 30px Orbitron,sans-serif;color:#fff}.plans .pr small{font-size:13px;color:var(--muted)}.plans ul{margin:4px 0 8px;padding-left:18px;color:var(--muted);font-size:14px}.plans .buy{display:flex;gap:6px;margin-top:auto}.plans select{padding:8px}.kr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #16161a}.newkey{margin-top:10px;padding:10px;border:1px dashed var(--acc);border-radius:10px;word-break:break-all}
 .entry .card{cursor:pointer}.entry .card b{font-size:18px;color:#fff;display:block;margin:6px 0}.entry .card .ic{font-size:26px}.entry .card .go{color:var(--gold2);font-size:14px;margin-top:8px;display:inline-block}
 .steps{counter-reset:s}.steps .card b{color:#fff}.steps .card b:before{counter-increment:s;content:counter(s);display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;margin-right:8px;background:var(--acc);color:#000;font-size:13px}
 footer.site{position:relative;z-index:1;border-top:1px solid #1d1d22;margin-top:40px;padding:28px clamp(16px,2vw,32px) 18px;color:var(--muted);font-size:14px}
@@ -77,7 +78,7 @@ h1,h2{letter-spacing:.02em;text-transform:uppercase}h1{font-weight:800}.home h1 
 <canvas id="bg"></canvas>
 <header>
   <a class="brand" href="#home" data-go="home"><img src="/brand/skw-coin.webp" alt="SKW" width="40" height="40">SKW <span>Trading Market</span></a>
-  <nav><button data-t="home" class="on">Home</button><button data-t="freq">Agentic trading</button><button data-t="dash">Live</button><button data-t="trade">Trade</button></nav>
+  <nav><button data-t="home" class="on">Home</button><button data-t="freq">Agentic trading</button><button data-t="dash">Live</button><button data-t="trade">Trade</button><button data-t="keys">API keys</button></nav>
   <div><span id="who"></span> <button class="btn sec" id="connect">Connect wallet</button></div>
 </header>
 <main>
@@ -92,7 +93,7 @@ h1,h2{letter-spacing:.02em;text-transform:uppercase}h1{font-weight:800}.home h1 
     <div class="card" data-go="freq"><div class="ic">📡</div><b>Agentic trading</b><div class="note">Every real agent call as a tone, a wave and a point in the quantum field. Frequencies, resonance and the council at work.</div><span class="go">Open →</span></div>
     <div class="card" data-go="dash"><div class="ic">📊</div><b>Live</b><div class="note">Agent traffic today, paid tool calls, tool demand spectrum and the crypto market at a glance.</div><span class="go">Open →</span></div>
     <div class="card" data-go="trade"><div class="ic">⚡</div><b>Trade</b><div class="note">Solana terminal with live charts and best-price routing through Jupiter. Ethereum, Base, Arbitrum and Polygon through cross-chain swap.</div><span class="go">Open →</span></div>
-    <div class="card" data-go="agents"><div class="ic">🤖</div><b>Tollgate for Agents</b><div class="note">124 tools over x402 and MCP. Agents pay a fraction of a cent in USDC per call. No accounts, no API keys.</div><span class="go">Open →</span></div>
+    <div class="card" data-go="keys"><div class="ic">🤖</div><b>Tollgate for Agents</b><div class="note">Connect your own AI agent with an API key: 10 tools free, all 124 with Pro or Desk. Or pay per call in USDC over x402 and MCP.</div><span class="go">Open →</span></div>
   </div>
   <h2>How it works</h2>
   <div class="grid steps">
@@ -183,6 +184,16 @@ h1,h2{letter-spacing:.02em;text-transform:uppercase}h1{font-weight:800}.home h1 
   </div>
 </section>
 
+<section id="keys">
+  <div class="hero" style="padding-top:18px"><h1 style="font-size:clamp(24px,4vw,40px)">API keys for your agent</h1><p>Connect your own AI agent and let it trade and research automatically. Your wallet stays yours: the agent signs its own transactions, we never hold keys or funds. Every trade carries the 0.3% platform fee.</p></div>
+  <div class="grid plans" id="plans"></div>
+  <div class="grid" style="grid-template-columns:2fr 1fr;margin-top:14px">
+    <div class="card"><div class="k" style="display:flex;justify-content:space-between;align-items:center"><span>Your keys <span id="k-plan" class="note"></span></span><span style="display:flex;gap:8px"><input id="k-label" placeholder="Agent name" style="width:160px;padding:7px"><button class="btn" id="k-new">Create key</button></span></div><div id="k-new-out"></div><div id="k-list" class="note" style="margin-top:10px">Connect your wallet to create a key.</div></div>
+    <div class="card"><div class="k">Use it</div><p class="note">HTTP: send the key in a header with any tool.</p><code style="display:block;white-space:pre-wrap;word-break:break-all">curl -H "X-API-Key: skw_…" https://skinwinking.com/api/v1/data/fear-greed</code><p class="note">MCP: add the header <code>X-API-Key</code> to <code>https://skinwinking.com/mcp</code>, or pass the key as <code>paymentProof</code>. Without a key, every tool still works pay-per-call over x402.</p><p class="note">Free plan tools: <span id="k-free"></span></p></div>
+  </div>
+  <div id="k-msg" class="note" style="margin-top:10px"></div>
+</section>
+
 <section id="tools">
   <p class="note">Every tool is pay-per-call in USDC over <a href="https://x402.org">x402</a> on Base, Polygon or Solana. Agents call the URL, get HTTP 402 with payment details, pay, and retry. Schemas: <a href="/openapi.json">openapi.json</a> · catalog: <a href="/llms.txt">llms.txt</a></p>
   <input id="filter" placeholder="Filter tools, e.g. audit, price, pdf, dns">
@@ -207,7 +218,7 @@ h1,h2{letter-spacing:.02em;text-transform:uppercase}h1{font-weight:800}.home h1 
     <div><h4>Market</h4><a href="#trade" data-go="trade">Trade</a><a href="#swap" data-go="swap">Cross-chain swap</a><a href="#freq" data-go="freq">Agentic trading</a><a href="#dash" data-go="dash">Live</a></div>
     <div><h4>Company</h4><a href="/about">About us</a><a href="/contact">Contact</a><a href="mailto:support@skinwinking.com">support@skinwinking.com</a></div>
     <div><h4>Legal</h4><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a><a href="/cookies">Cookie Policy</a><a href="/risk">Risk Disclosure</a></div>
-    <div><h4>Developers</h4><a href="#agents" data-go="agents">API &amp; tools</a><a href="/llms.txt">llms.txt</a><a href="/openapi.json">OpenAPI</a><a href="/.well-known/agent-card.json">A2A agent card</a><a href="/.well-known/security.txt">Security</a></div>
+    <div><h4>Developers</h4><a href="#keys" data-go="keys">API keys</a><a href="#agents" data-go="agents">API &amp; tools</a><a href="/llms.txt">llms.txt</a><a href="/openapi.json">OpenAPI</a><a href="/.well-known/agent-card.json">A2A agent card</a><a href="/.well-known/security.txt">Security</a></div>
   </div>
   <div class="fbot"><span>© 2026 SKW · SkinWinKing</span><span>Crypto-assets are volatile. Nothing here is investment advice.</span></div>
 </footer>
@@ -278,7 +289,7 @@ async function signIn(w){try{let address,sign;
  if(v.error)throw new Error('Sign-in failed: '+v.error);me={...v,wallet:w.name};wallet=w;$('#wm').classList.remove('on');showMe();
  if(w.kind==='evm'&&$('#chain').value==='solana'){$('#chain').value='base';fillTokens()}if(w.kind==='solana'){$('#chain').value='solana';fillTokens()}
  }catch(e){$('#wm').classList.remove('on');alertBox(e.message||String(e))}}
-function showMe(){$('#who').textContent=me?(me.wallet?me.wallet+' · ':'')+me.address.slice(0,4)+'…'+me.address.slice(-4):'';$('#connect').textContent=me?'Sign out':'Connect wallet'}
+function showMe(){if(window.loadKeys)setTimeout(loadKeys,0);$('#who').textContent=me?(me.wallet?me.wallet+' · ':'')+me.address.slice(0,4)+'…'+me.address.slice(-4):'';$('#connect').textContent=me?'Sign out':'Connect wallet'}
 $('#connect').onclick=async()=>{if(me){await fetch('/auth/logout',{method:'POST'});me=null;wallet=null;showMe()}else openWallets()};
 function alertBox(t){$('#qout').innerHTML='<span class=bad>'+t+'</span>';go('swap')}
 
@@ -446,6 +457,34 @@ if(navigator.modelContext?.provideContext){navigator.modelContext.provideContext
    $('#t-msg').innerHTML='<span class=ok>Order sent.</span> <a target=_blank rel=noopener href="https://solscan.io/tx/'+sig+'">View on Solscan</a>';tq=null;est();setTimeout(loadTrades,4000)}catch(e){tq=null;$('#t-msg').innerHTML='<span class=bad>'+(e.message||String(e))+'</span>';est()}};
  window.onTrade=()=>{loadMk().then(()=>{setTimeout(()=>loadCandles(true),60);loadTrades()})};if($('#trade').classList.contains('on'))onTrade();
  setInterval(()=>{if(visible())loadTrades()},8000);setInterval(()=>{if(visible())loadCandles(false)},15000);setInterval(()=>{if(visible()&&!$('#mk-q').value)loadMk()},20000)})();
+// API keys and plans
+(function(){let K=null;const esc=t=>String(t??'').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+ const msg=(t,cls)=>{$('#k-msg').innerHTML=t?'<span class="'+(cls||'')+'">'+t+'</span>':''};
+ window.loadKeys=async()=>{try{K=await (await fetch('/app/keys',{cache:'no-store'})).json()}catch(e){return}
+  $('#k-free').textContent=K.freeTools.join(', ');const cur=K.signedIn?K.plan:null;
+  $('#plans').innerHTML=['free','pro','desk'].map(id=>{const p=K.plans[id];return '<div class="card'+(cur===id?' cur':'')+'"><div class="k">'+p.name+(cur===id?' · your plan'+(K.expires?' until '+K.expires.slice(0,10):''):'')+'</div><div class="pr">'+(p.priceUsdc?p.priceUsdc+' <small>USDC / 30 days</small>':'0 <small>free</small>')+'</div><ul><li>'+(p.tools==='all'?'All tools and skills':'10 tools: prices, token audit, trade quotes, council, Kelly')+'</li><li>'+p.perDay.toLocaleString()+' calls a day, '+p.perMinute+' a minute</li><li>'+p.maxKeys+' API key'+(p.maxKeys>1?'s':'')+(p.maxKeys>1?' (one per bot)':'')+'</li><li>0.3% fee on each trade</li></ul>'+(p.priceUsdc?'<div class="buy"><select data-net="'+id+'"><option value="solana">USDC on Solana</option><option value="base">USDC on Base</option><option value="polygon">USDC on Polygon</option></select><button class="btn" data-buy="'+id+'">'+(cur===id?'Extend':'Buy')+'</button></div>':'')+'</div>'}).join('');
+  if(!K.signedIn){$('#k-plan').textContent='';$('#k-list').textContent='Connect your wallet to create a key.';return}
+  $('#k-plan').textContent='· '+K.plans[K.plan].name+' plan';
+  $('#k-list').innerHTML=K.keys.length?K.keys.map(k=>'<div class="kr"><span><b>'+esc(k.label)+'</b><div class="note">created '+k.created.slice(0,10)+(k.last_used?' · last used '+k.last_used.slice(0,16).replace('T',' '):' · never used')+'</div></span><button class="btn sec" data-revoke="'+k.id+'">Revoke</button></div>').join(''):'No keys yet.'};
+ $('#k-new').onclick=async()=>{if(!me)return openWallets();const r=await fetch('/app/keys',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:$('#k-label').value||'My agent'})});const j=await r.json();
+  if(!r.ok)return msg(j.message||j.error,'bad');$('#k-new-out').innerHTML='<div class="newkey"><b>'+j.key+'</b><div class="note">Copy it now, it is shown only once. <button class="btn sec" id="k-copy">Copy</button></div></div>';$('#k-copy').onclick=()=>navigator.clipboard.writeText(j.key).then(()=>{$('#k-copy').textContent='Copied'});loadKeys()};
+ document.addEventListener('click',async e=>{const rv=e.target.closest('[data-revoke]');if(rv){await fetch('/app/keys/'+rv.dataset.revoke,{method:'DELETE'});loadKeys();return}
+  const b=e.target.closest('[data-buy]');if(!b)return;const plan=b.dataset.buy,net=document.querySelector('[data-net='+plan+']').value;
+  if(!me||!wallet)return openWallets();const amount=BigInt(K.plans[plan].priceUsdc)*1000000n;const pay=K.pay[net];
+  try{let tx;if(net==='solana'){if(wallet.kind!=='solana')return msg('Sign in with a Solana wallet (Phantom, Solflare, Backpack) to pay on Solana, or pick Base / Polygon.','bad');
+    const W=solanaWeb3,owner=new W.PublicKey(me.address),mint=new W.PublicKey(pay.usdc),dest=new W.PublicKey(pay.payTo);const TP=new W.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),AP=new W.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+    const ata=o=>W.PublicKey.findProgramAddressSync([o.toBuffer(),TP.toBuffer(),mint.toBuffer()],AP)[0];const Buf=owner.toBuffer().constructor;const data=new Uint8Array(10);data[0]=12;let a=amount;for(let i=1;i<9;i++){data[i]=Number(a&255n);a>>=8n}data[9]=6;
+    const ix=new W.TransactionInstruction({programId:TP,keys:[{pubkey:ata(owner),isSigner:false,isWritable:true},{pubkey:mint,isSigner:false,isWritable:false},{pubkey:ata(dest),isSigner:false,isWritable:true},{pubkey:owner,isSigner:true,isWritable:false}],data:Buf.from(data)});
+    const bh=await (await fetch('/app/solana/blockhash')).json();if(!bh.blockhash)throw new Error('Solana RPC busy, try again');const t=new W.Transaction({feePayer:owner,blockhash:bh.blockhash,lastValidBlockHeight:bh.lastValidBlockHeight}).add(ix);
+    msg('Approve the '+K.plans[plan].priceUsdc+' USDC payment in your wallet…');const res=await wallet.p.signAndSendTransaction(t);tx=res.signature||res}
+   else{if(wallet.kind!=='evm')return msg('Sign in with an EVM wallet (MetaMask, Rabby, Coinbase…) to pay on '+net+', or pick Solana.','bad');
+    try{await wallet.p.request({method:'wallet_switchEthereumChain',params:[{chainId:pay.chainId}]})}catch(e){throw new Error('Switch your wallet to '+net)}
+    const pad=h=>h.replace(/^0x/,'').padStart(64,'0');msg('Approve the '+K.plans[plan].priceUsdc+' USDC payment in your wallet…');
+    tx=await wallet.p.request({method:'eth_sendTransaction',params:[{from:me.address,to:pay.usdc,data:'0xa9059cbb'+pad(pay.payTo.toLowerCase())+pad(amount.toString(16))}]})}
+   for(let i=0;i<36;i++){msg('Payment sent. Confirming on chain… ('+(i*5)+'s)');const r=await fetch('/app/plan',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({plan,network:net,tx})});const j=await r.json();
+    if(r.ok){msg(K.plans[plan].name+' plan active until '+j.expires.slice(0,10)+'.','ok');return loadKeys()}if(!j.retryable)return msg('Payment not accepted: '+(j.message||j.error)+'. Transaction: '+esc(tx),'bad');await new Promise(z=>setTimeout(z,5000))}
+   msg('Still confirming. Your transaction: '+esc(tx)+'. Reload this page in a minute; if the plan is not active, email support@skinwinking.com with the transaction.','bad')}catch(e){msg(e.message||String(e),'bad')}});
+ loadKeys()})();
 if(location.hash.length>1)go(location.hash.slice(1));
 fillTokens();loadStats();loadMarket();loadCatalog();setInterval(loadStats,30000);setInterval(loadMarket,60000);
 fetch('/auth/me').then(r=>r.ok?r.json():null).then(m=>{me=m;showMe()});
