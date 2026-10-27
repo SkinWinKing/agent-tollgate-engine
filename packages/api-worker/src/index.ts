@@ -138,6 +138,23 @@ app.get('/internal/stats', async (c) => {
   return c.json({ sales: { byRoute: byRoute.results, recent: recent.results }, counters });
 });
 
+// TEMP diagnostics for outbound 525s; remove after debugging.
+app.get('/internal/fetch-debug', async (c) => {
+  if (!c.env.STATS_TOKEN || c.req.header('authorization') !== `Bearer ${c.env.STATS_TOKEN}`) return c.json({ error: 'NOT_FOUND' }, 404);
+  const url = c.req.query('url') ?? '';
+  const variants: Record<string, RequestInit> = { plain: {}, ua: { headers: { 'user-agent': 'Mozilla/5.0' } }, nocache: { cf: { cacheTtl: 0 } } as RequestInit };
+  const out: Record<string, unknown> = {};
+  for (const [k, init] of Object.entries(variants)) {
+    try {
+      const r = await fetch(url, { ...init, signal: AbortSignal.timeout(10_000) });
+      out[k] = { status: r.status, server: r.headers.get('server'), cfRay: r.headers.get('cf-ray'), body: (await r.text()).slice(0, 300) };
+    } catch (e) {
+      out[k] = { error: String(e) };
+    }
+  }
+  return c.json(out);
+});
+
 // Operator-only: run any tool handler live without paying, for smoke tests after a deploy.
 app.get('/internal/tool/:id', async (c) => {
   const token = c.env.STATS_TOKEN;
