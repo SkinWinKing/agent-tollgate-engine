@@ -1,0 +1,176 @@
+// Single-page app served at / (for browsers) and /app. Inline so the Worker has no static-asset dependency.
+export const APP_HTML = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent Tollgate — pay-per-call tools for AI agents</title>
+<meta name="description" content="68 pay-per-call tools for AI agents over x402, live agent activity, and a non-custodial swap with rug-pull checks. Sign in with Phantom or MetaMask.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="alternate" type="text/markdown" href="/llms.txt">
+<style>
+:root{--bg:#0b1220;--panel:#111a2e;--line:#1f2a44;--text:#e6edf7;--muted:#8da2c0;--acc:#4ade80;--warn:#fbbf24;--bad:#f87171;--blue:#60a5fa}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,rgba(74,222,128,.12),transparent 60%),radial-gradient(900px 500px at -10% 20%,rgba(96,165,250,.12),transparent 60%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.55}header,main{position:relative;z-index:1}
+.hero{padding:42px 0 18px;text-align:center}.hero h1{font-size:clamp(28px,5vw,52px);line-height:1.05;margin:0 0 12px;letter-spacing:-.02em;background:linear-gradient(90deg,#e6edf7,#4ade80 45%,#60a5fa);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--muted);max-width:640px;margin:0 auto 18px;font-size:16px}.cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.card{backdrop-filter:blur(10px);background:linear-gradient(180deg,rgba(17,26,46,.85),rgba(17,26,46,.6))!important;box-shadow:0 0 0 1px rgba(74,222,128,.06),0 10px 30px rgba(0,0,0,.25);transition:transform .2s,box-shadow .2s}.card:hover{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(74,222,128,.25),0 14px 36px rgba(0,0,0,.35)}
+.spectrum{display:flex;align-items:flex-end;gap:8px;height:170px;padding-top:10px}.bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}.bar i{display:block;width:100%;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,#4ade80,#22c55e 40%,#1e3a8a);box-shadow:0 0 18px rgba(74,222,128,.35);transition:height 1s cubic-bezier(.2,.8,.2,1);animation:eq 1.4s ease-in-out infinite alternate}.bar span{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+@keyframes eq{from{filter:brightness(.85)}to{filter:brightness(1.25)}}
+.spark{width:100%;height:120px}.glow{text-shadow:0 0 18px rgba(74,222,128,.45)}
+a{color:var(--blue)}header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(11,18,32,.95);backdrop-filter:blur(6px);z-index:5}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700}.brand svg{width:28px;height:28px}
+nav{display:flex;gap:4px}nav button{background:none;border:0;color:var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer;font:inherit}nav button.on{background:var(--panel);color:var(--text)}
+main{max-width:1100px;margin:0 auto;padding:20px}section{display:none}section.on{display:block}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.k{color:var(--muted);font-size:13px}.v{font-size:26px;font-weight:700;margin-top:4px}.live{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--acc);margin-right:6px;animation:p 1.6s infinite}
+@keyframes p{50%{opacity:.3}}h2{font-size:17px;margin:22px 0 10px}
+table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}th{color:var(--muted);font-weight:500}
+.btn{background:var(--acc);color:#05220f;border:0;border-radius:10px;padding:10px 16px;font:600 14px system-ui;cursor:pointer}.btn.sec{background:var(--panel);color:var(--text);border:1px solid var(--line)}.btn:disabled{opacity:.5;cursor:not-allowed}
+input,select{background:#0a1020;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;width:100%}
+label{display:block;color:var(--muted);font-size:13px;margin:10px 0 4px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.note{color:var(--muted);font-size:13px}.ok{color:var(--acc)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:12px;color:var(--muted)}
+code{background:#0a1020;padding:2px 6px;border-radius:6px;font-size:13px}#who{font-size:13px;color:var(--muted)}
+@media(max-width:640px){header{flex-wrap:wrap}.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<header>
+  <div class="brand"><svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#111a2e"/><path d="M14 44V28l18-12 18 12v16" fill="none" stroke="#4ade80" stroke-width="5" stroke-linejoin="round"/><path d="M24 44V34h16v10" fill="none" stroke="#4ade80" stroke-width="5" stroke-linejoin="round"/></svg>Agent Tollgate</div>
+  <nav><button data-t="dash" class="on">Live</button><button data-t="swap">Swap</button><button data-t="tools">Tools</button><button data-t="agents">For agents</button></nav>
+  <div><span id="who"></span> <button class="btn sec" id="connect">Connect wallet</button></div>
+</header>
+<main>
+<section id="dash" class="on">
+  <div class="hero">
+    <h1>The live tollgate for AI agents</h1>
+    <p>68 pay-per-call tools for autonomous agents: crypto data, rug-pull audits, swaps, web, documents, threat intel and AI. Agents pay a fraction of a cent in USDC per call. No accounts, no API keys.</p>
+    <div class="cta"><button class="btn" onclick="document.querySelector('nav button[data-t=swap]').click()">Swap with rug-check</button><button class="btn sec" onclick="document.querySelector('nav button[data-t=agents]').click()">Connect your agent</button></div>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="k"><span class="live"></span>Agent requests today</div><div class="v glow" id="s-today">–</div></div>
+    <div class="card"><div class="k">Requests, last 7 days</div><div class="v" id="s-week">–</div></div>
+    <div class="card"><div class="k">Paid tool calls</div><div class="v" id="s-paid">–</div></div>
+    <div class="card"><div class="k">Tools available</div><div class="v" id="s-tools">–</div></div>
+  </div>
+  <h2>Market</h2>
+  <div class="grid" id="market"></div>
+  <div class="grid" style="grid-template-columns:2fr 1fr;margin-top:14px">
+    <div class="card"><div class="k">Tool demand spectrum · today</div><div class="spectrum" id="spectrum"></div></div>
+    <div class="card"><div class="k">Agent traffic · 7 days</div><svg class="spark" id="spark" viewBox="0 0 300 120" preserveAspectRatio="none"></svg><div class="note" id="spark-l"></div></div>
+  </div>
+  <p class="note">Updates every 30 seconds. Aggregated counts only; no wallets or IPs are shown.</p>
+</section>
+
+<section id="swap">
+  <div class="card" style="max-width:560px">
+    <h2 style="margin-top:0">Swap with a rug-pull check</h2>
+    <p class="note">Non-custodial: we build the transaction, you sign it in your own wallet. Keys and funds never touch our servers. A 0.3% platform fee is included in the route.</p>
+    <label>Chain</label>
+    <select id="chain"><option value="solana">Solana (Phantom)</option><option value="base">Base (MetaMask)</option><option value="ethereum">Ethereum (MetaMask)</option><option value="arbitrum">Arbitrum (MetaMask)</option><option value="polygon">Polygon (MetaMask)</option></select>
+    <div class="row"><div><label>From</label><select id="from"></select></div><div><label>To</label><select id="to"></select></div></div>
+    <div id="custom-wrap" style="display:none"><label>Token address / mint</label><input id="custom" placeholder="Paste a token mint or 0x address"></div>
+    <label>Amount</label><input id="amount" type="number" min="0" step="any" placeholder="0.1">
+    <div style="display:flex;gap:10px;margin-top:14px"><button class="btn" id="quote">Get quote</button><button class="btn sec" id="sign" disabled>Sign in wallet</button></div>
+    <div id="qout" class="note" style="margin-top:14px"></div>
+  </div>
+</section>
+
+<section id="tools">
+  <p class="note">Every tool is pay-per-call in USDC over <a href="https://x402.org">x402</a> on Base, Polygon or Solana. Agents call the URL, get HTTP 402 with payment details, pay, and retry. Schemas: <a href="/openapi.json">openapi.json</a> · catalog: <a href="/llms.txt">llms.txt</a></p>
+  <input id="filter" placeholder="Filter tools, e.g. audit, price, pdf, dns">
+  <div class="card" style="margin-top:12px"><table><thead><tr><th>Tool</th><th>Price</th><th>Endpoint</th></tr></thead><tbody id="catalog"></tbody></table></div>
+</section>
+
+<section id="agents">
+  <div class="grid">
+    <div class="card"><b>MCP</b><p class="note">Streamable HTTP, no install</p><code>https://skinwinking.com/mcp</code></div>
+    <div class="card"><b>x402 manifest</b><p class="note">Every paid resource</p><a href="/.well-known/x402">/.well-known/x402</a></div>
+    <div class="card"><b>A2A agent</b><p class="note">Describe a task, get the right tools</p><a href="/.well-known/agent-card.json">agent-card.json</a></div>
+    <div class="card"><b>Docs for LLMs</b><p class="note">Markdown catalog and how to pay</p><a href="/llms.txt">llms.txt</a> · <a href="/auth.md">auth.md</a></div>
+  </div>
+  <h2>Pay per call</h2>
+  <div class="card"><code>curl -i https://skinwinking.com/api/v1/data/fear-greed</code><p class="note">→ HTTP 402 with <code>PAYMENT-REQUIRED</code>. Pay with any x402 client (e.g. <code>@x402/fetch</code>) and repeat the request.</p></div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js" defer></script>
+<script>
+const $=s=>document.querySelector(s), fmt=n=>Number(n).toLocaleString('en-US');
+const TOKENS={
+ solana:[['SOL','SOL',9],['USDC','USDC',6],['USDT','USDT',6],['JUP','JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',6],['BONK','DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',5],['WIF','EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',6]],
+ evm:[['ETH','ETH',18],['USDC','USDC',6]],
+ polygon:[['POL','POL',18],['USDC','USDC',6]]};
+const CHAIN_ID={ethereum:'0x1',base:'0x2105',arbitrum:'0xa4b1',polygon:'0x89'};
+const EXPLORER={solana:'https://solscan.io/tx/',ethereum:'https://etherscan.io/tx/',base:'https://basescan.org/tx/',arbitrum:'https://arbiscan.io/tx/',polygon:'https://polygonscan.com/tx/'};
+let me=null,lastQuote=null;
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,section').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#'+b.dataset.t).classList.add('on')});
+
+let energy=0.3;
+function countTo(el,to){const from=Number(el.dataset.v||0),t0=performance.now();el.dataset.v=to;const step=t=>{const k=Math.min(1,(t-t0)/900);el.textContent=fmt(Math.round(from+(to-from)*(1-Math.pow(1-k,3))));if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
+async function loadStats(){try{const s=await (await fetch('/app/stats')).json();countTo($('#s-today'),s.requestsToday);countTo($('#s-week'),s.requests7d);countTo($('#s-paid'),s.paidCalls);countTo($('#s-tools'),s.tools);
+ energy=Math.min(1,0.25+Math.log10(1+s.requestsToday)/3.5);
+ const top=s.topToolsToday.length?s.topToolsToday:[{tool:'waiting for agents',calls:0}],max=Math.max(1,...top.map(t=>t.calls));
+ $('#spectrum').innerHTML=top.map((t,i)=>'<div class="bar" title="'+t.tool+': '+t.calls+'"><i style="height:'+Math.max(6,Math.round(140*t.calls/max))+'px;animation-delay:'+(i*0.15)+'s"></i><span>'+t.tool.replace(/_/g,' ')+'</span></div>').join('');
+ const d=s.daily||[];if(d.length){const mx=Math.max(1,...d.map(x=>x.requests)),pts=d.map((x,i)=>[i*(300/Math.max(1,d.length-1)),112-100*x.requests/mx]);
+  const line=pts.map(p=>p.join(',')).join(' ');$('#spark').innerHTML='<defs><linearGradient id=g x1=0 y1=0 x2=0 y2=1><stop offset=0 stop-color=#4ade80 stop-opacity=.45 /><stop offset=1 stop-color=#4ade80 stop-opacity=0 /></linearGradient></defs><polygon fill=url(#g) points="0,120 '+line+' 300,120"/><polyline fill=none stroke=#4ade80 stroke-width=2.5 points="'+line+'"/>';
+  $('#spark-l').textContent=d[0].date.slice(5)+' → '+d[d.length-1].date.slice(5)+' · peak '+fmt(mx)+'/day'}}catch(e){}}
+// Frequency waves: amplitude follows live agent traffic.
+(function waves(){const c=$('#bg'),x=c.getContext('2d');let w,h,t=0;const fit=()=>{w=c.width=innerWidth*devicePixelRatio;h=c.height=innerHeight*devicePixelRatio};fit();addEventListener('resize',fit);
+ const cols=['74,222,128','96,165,250','167,139,250','45,212,191'];
+ if(matchMedia('(prefers-reduced-motion: reduce)').matches){return}
+ (function frame(){x.clearRect(0,0,w,h);t+=0.006+energy*0.012;for(let k=0;k<4;k++){x.beginPath();const amp=h*(0.05+energy*0.09)*(1-k*0.18),f=0.0018+k*0.0009,y0=h*(0.55+k*0.07);
+  for(let i=0;i<=w;i+=6){const y=y0+Math.sin(i*f+t*(1.4+k*0.35))*amp+Math.sin(i*f*2.7-t*2.1)*amp*0.32;i?x.lineTo(i,y):x.moveTo(i,y)}
+  x.strokeStyle='rgba('+cols[k]+','+(0.55-k*0.1)+')';x.lineWidth=(2.2-k*0.35)*devicePixelRatio;x.shadowColor='rgba('+cols[k]+',.8)';x.shadowBlur=14*devicePixelRatio;x.stroke()}requestAnimationFrame(frame)})()})();
+async function loadMarket(){try{const m=await (await fetch('/app/market')).json();const cards=(m.prices||[]).map(p=>'<div class="card"><div class="k">'+p.symbol.replace('USDT','')+'</div><div class="v">$'+fmt(p.price)+'</div><div class="'+(p.change24hPct>=0?'ok':'bad')+'">'+(p.change24hPct>=0?'+':'')+p.change24hPct+'% 24h</div></div>');
+ if(m.fearGreed)cards.unshift('<div class="card"><div class="k">Fear &amp; Greed</div><div class="v">'+m.fearGreed.value+'</div><div class="note">'+m.fearGreed.classification+'</div></div>');$('#market').innerHTML=cards.join('')}catch(e){}}
+async function loadCatalog(){const c=await (await fetch('/app/catalog')).json();const draw=()=>{const f=$('#filter').value.toLowerCase();$('#catalog').innerHTML=c.filter(t=>!f||(t.id+t.summary).toLowerCase().includes(f)).map(t=>'<tr><td><b>'+t.id+'</b><div class=note>'+t.summary+'</div></td><td><span class=pill>'+t.price+'</span></td><td><code>'+t.method+' '+t.path+'</code></td></tr>').join('')};$('#filter').oninput=draw;draw()}
+
+function fillTokens(){const ch=$('#chain').value,list=ch==='solana'?TOKENS.solana:ch==='polygon'?TOKENS.polygon:TOKENS.evm;
+ const opts=list.map(t=>'<option value="'+t[1]+'" data-d="'+t[2]+'">'+t[0]+'</option>').join('');$('#from').innerHTML=ch==='solana'?opts:'<option value="'+list[0][1]+'" data-d="18">'+list[0][0]+'</option>';$('#to').innerHTML=opts+'<option value="custom">Other token…</option>';$('#to').selectedIndex=1;$('#custom-wrap').style.display='none'}
+$('#chain').onchange=fillTokens;$('#to').onchange=()=>{$('#custom-wrap').style.display=$('#to').value==='custom'?'block':'none'};
+
+async function connect(){
+ const ch=$('#chain').value;let address,sign;
+ if(ch==='solana'){const p=window.phantom?.solana||window.solana;if(!p)return alertBox('Install Phantom to continue.');const r=await p.connect();address=r.publicKey.toString();
+  sign=async m=>{const s=await p.signMessage(new TextEncoder().encode(m),'utf8');return [...s.signature].map(b=>b.toString(16).padStart(2,'0')).join('')}}
+ else{if(!window.ethereum)return alertBox('Install MetaMask to continue.');[address]=await ethereum.request({method:'eth_requestAccounts'});sign=m=>ethereum.request({method:'personal_sign',params:[m,address]})}
+ const n=await (await fetch('/auth/nonce?address='+encodeURIComponent(address))).json();if(n.error)return alertBox(n.error);
+ const signature=await sign(n.message);
+ const v=await (await fetch('/auth/verify',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({nonce:n.nonce,signature})})).json();
+ if(v.error)return alertBox('Sign-in failed: '+v.error);me=v;showMe()}
+function showMe(){$('#who').textContent=me?me.address.slice(0,4)+'…'+me.address.slice(-4):'';$('#connect').textContent=me?'Sign out':'Connect wallet'}
+$('#connect').onclick=async()=>{if(me){await fetch('/auth/logout',{method:'POST'});me=null;showMe()}else{try{await connect()}catch(e){alertBox(e.message||String(e))}}};
+function alertBox(t){$('#qout').innerHTML='<span class=bad>'+t+'</span>';document.querySelector('nav button[data-t=swap]').click()}
+
+async function decimalsOf(chain,token){if(['SOL','USDC','USDT','ETH','POL'].includes(token))return null;const r=await (await fetch('/app/decimals?chain='+chain+'&token='+token)).json();return r.decimals}
+$('#quote').onclick=async()=>{
+ if(!me)return alertBox('Connect your wallet first.');const ch=$('#chain').value,fromOpt=$('#from').selectedOptions[0];let to=$('#to').value;if(to==='custom')to=$('#custom').value.trim();
+ const amt=Number($('#amount').value);if(!(amt>0))return alertBox('Enter an amount.');
+ const dec=Number(fromOpt.dataset.d);const base=BigInt(Math.round(amt*10**Math.min(dec,9)))*10n**BigInt(Math.max(dec-9,0));
+ $('#qout').textContent='Finding the best route…';$('#sign').disabled=true;
+ const r=await fetch('/app/quote',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({fromChain:ch,toChain:ch,inputToken:fromOpt.value,outputToken:to,amount:base.toString()})});const q=await r.json();
+ if(!r.ok)return alertBox(q.message||q.error);lastQuote={...q,chain:ch};
+ let outDec=Number($('#to').selectedOptions[0]?.dataset.d||0);if($('#to').value==='custom')outDec=await decimalsOf(ch,to)??0;
+ const out=q.quote?.outAmount?Number(q.quote.outAmount)/10**outDec:(q.quote?.toAmount?Number(q.quote.toAmount)/10**outDec:null);
+ const risk=q.outputTokenRisk;const riskHtml=risk?('<div>Token risk: <b class="'+(risk.riskLevel==='low'||risk.riskLevel==='trusted'?'ok':risk.riskLevel==='medium'?'warn':'bad')+'">'+(risk.riskLevel||'unknown')+'</b>'+(risk.flags&&risk.flags.length?' · '+risk.flags.join(', '):'')+(risk.warning?'<div class=bad>'+risk.warning+'</div>':'')+'</div>'):'';
+ $('#qout').innerHTML='<div>You receive ≈ <b>'+(out!==null?fmt(out):'see route')+'</b></div><div class=note>Route: '+q.route+' · fee '+(q.fee?.bps??30)+' bps'+(q.quote?.priceImpactPct?' · impact '+(Number(q.quote.priceImpactPct)*100).toFixed(2)+'%':'')+'</div>'+riskHtml;$('#sign').disabled=false};
+
+$('#sign').onclick=async()=>{const q=lastQuote;if(!q)return;try{const tx=q.unsignedTransaction;let sig;
+ if(q.chain==='solana'){const p=window.phantom?.solana||window.solana;const bytes=Uint8Array.from(atob(tx.serialized),c=>c.charCodeAt(0));const vtx=solanaWeb3.VersionedTransaction.deserialize(bytes);sig=(await p.signAndSendTransaction(vtx)).signature}
+ else{await ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:CHAIN_ID[q.chain]}]});sig=await ethereum.request({method:'eth_sendTransaction',params:[{from:me.address,to:tx.to,data:tx.data,value:tx.value,gas:tx.gasLimit}]})}
+ $('#qout').innerHTML='<span class=ok>Sent.</span> <a target=_blank rel=noopener href="'+EXPLORER[q.chain]+sig+'">View transaction</a>';$('#sign').disabled=true;lastQuote=null}catch(e){alertBox(e.message||String(e))}};
+
+// WebMCP: expose read-only tools to in-browser AI agents where supported.
+if(navigator.modelContext?.provideContext){navigator.modelContext.provideContext({tools:[
+ {name:'list_tools',description:'List the pay-per-call tools on this site with prices and endpoints',inputSchema:{type:'object',properties:{filter:{type:'string'}}},async execute({filter}){const c=await (await fetch('/app/catalog')).json();return{content:[{type:'text',text:JSON.stringify(c.filter(t=>!filter||(t.id+t.summary).toLowerCase().includes(filter.toLowerCase())))}]}}},
+ {name:'market_snapshot',description:'Current crypto prices and the Fear and Greed index',inputSchema:{type:'object',properties:{}},async execute(){return{content:[{type:'text',text:JSON.stringify(await (await fetch('/app/market')).json())}]}}},
+ {name:'live_activity',description:'Live agent request counts and the most requested tools today',inputSchema:{type:'object',properties:{}},async execute(){return{content:[{type:'text',text:JSON.stringify(await (await fetch('/app/stats')).json())}]}}}]})}
+
+fillTokens();loadStats();loadMarket();loadCatalog();setInterval(loadStats,30000);setInterval(loadMarket,60000);
+fetch('/auth/me').then(r=>r.ok?r.json():null).then(m=>{me=m;showMe()});
+</script>
+</body>
+</html>`;

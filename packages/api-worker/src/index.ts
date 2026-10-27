@@ -4,7 +4,9 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { AppEnv } from './env';
 import { discovery } from './agent-discovery';
+import { auth } from './auth';
 import { routes, TOOL_HANDLERS } from './routes';
+import { serveApp, webApp } from './web-app';
 
 export { NonceStore } from './nonce-store';
 
@@ -78,11 +80,15 @@ app.get('/favicon.ico', (c) => c.body(FAVICON, 200, { 'content-type': 'image/svg
 app.get('/favicon.svg', (c) => c.body(FAVICON, 200, { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' }));
 app.get('/health', (c) => c.json({ ok: true }));
 // Agents asking for markdown get the catalog directly; everyone else is redirected to it.
-app.get('/', (c) =>
-  (c.req.header('accept') ?? '').includes('text/markdown')
-    ? c.body(llmsTxt(context(c.env, c.req.url)), 200, { 'content-type': 'text/markdown; charset=utf-8', vary: 'Accept' })
-    : c.redirect('/llms.txt'),
-);
+// Agents asking for markdown get the catalog, browsers get the web app, everything else is sent to the catalog.
+app.get('/', (c) => {
+  const accept = c.req.header('accept') ?? '';
+  if (accept.includes('text/markdown')) return c.body(llmsTxt(context(c.env, c.req.url)), 200, { 'content-type': 'text/markdown; charset=utf-8', vary: 'Accept' });
+  if (accept.includes('text/html')) return serveApp(c);
+  return c.redirect('/llms.txt');
+});
+app.route('/', auth);
+app.route('/', webApp);
 app.get('/llms.txt', (c) => c.body(llmsTxt(context(c.env, c.req.url)), 200, { 'content-type': 'text/markdown; charset=utf-8' }));
 app.get('/openapi.json', (c) => c.json(openApiSpec(context(c.env, c.req.url))));
 
@@ -190,4 +196,14 @@ app.onError((err, c) => {
   return c.json({ error: 'INTERNAL_ERROR', message: 'Unexpected failure' }, 500);
 });
 
-export default app;
+/** Nightly copy of the D1 sales ledger to R2, so paid-call history survives any database mishap. */
+async function backupSales(env: AppEnv['Bindings']) {
+  const rows = await env.SALES.prepare('SELECT * FROM sales ORDER BY id').all();
+  const day = new Date().toISOString().slice(0, 10);
+  await env.BACKUPS.put(`sales/${day}.json`, JSON.stringify({ exportedAt: new Date().toISOString(), rows: rows.results }), { httpMetadata: { contentType: 'application/json' } });
+}
+
+export default {
+  fetch: app.fetch,
+  scheduled: (_event: ScheduledController, env: AppEnv['Bindings'], ctx: ExecutionContext) => ctx.waitUntil(backupSales(env)),
+};

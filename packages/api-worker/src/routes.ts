@@ -22,7 +22,7 @@ const TRUSTED_MINTS = new Set([
 ]);
 
 /** Time-boxed rug check of the token being bought, bundled with the quote; the full itemised audit stays a paid route. */
-async function quickRisk(rpcUrl: string, mint: string) {
+export async function quickRisk(rpcUrl: string, mint: string) {
   if (TRUSTED_MINTS.has(mint)) return { mint, riskLevel: 'trusted', riskScore: 0, flags: [] as string[] };
   const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), RISK_TIMEOUT_MS));
   const audit = await Promise.race([auditSolanaToken(rpcUrl, mint, { quick: true }).catch(() => null), timeout]);

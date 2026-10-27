@@ -53,3 +53,10 @@ id = "cc15b1fefd7646c18651dd19c1e4702e"
 [[analytics_engine_datasets]]
 binding = "EVENTS"
 dataset = "tollgate_events"
+
+[[r2_buckets]]
+binding = "BACKUPS"
+bucket_name = "tollgate-backups"
+
+[triggers]
+crons = ["17 3 * * *"]

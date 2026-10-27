@@ -12,6 +12,8 @@ export interface WorkerEnv {
   CF_BROWSER_TOKEN?: string;
   EGRESS_URL?: string;
   EGRESS_TOKEN?: string;
+  SESSION_SECRET?: string;
+  BACKUPS: R2Bucket;
   MERCHANT_PAYOUT_ADDRESS_SOL: string;
   MERCHANT_PAYOUT_ADDRESS_EVM: string;
   SOLANA_RPC_URL?: string;
