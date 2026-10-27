@@ -27,7 +27,7 @@ export const serveApp = (c: { body: (b: string, s: 200, h: Record<string, string
     'content-type': 'text/html; charset=utf-8',
     'cache-control': 'public, max-age=300',
     'content-security-policy':
-      "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.mainnet-beta.solana.com; frame-ancestors 'none'; base-uri 'none'",
+      "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.mainnet-beta.solana.com; frame-ancestors 'none'; base-uri 'none'",
     'x-frame-options': 'DENY',
     'referrer-policy': 'strict-origin-when-cross-origin',
   });
@@ -108,7 +108,7 @@ webApp.get('/app/quantum', async (c) => {
 
 webApp.get('/app/market', async (c) => {
   const env = toolEnv(c);
-  const [fng, prices, space] = await Promise.all([
+  const [fng, space, prices] = await Promise.all([
     TOOL_HANDLERS.fear_greed!(new URLSearchParams({ days: '7' }), env).catch(() => null),
     TOOL_HANDLERS.space_weather!(new URLSearchParams(), env).catch(() => null),
     TOOL_HANDLERS.crypto_price!(new URLSearchParams({ symbols: 'BTC,ETH,SOL,BNB,XRP,DOGE' }), env).catch(() => null),
