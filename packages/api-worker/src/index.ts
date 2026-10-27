@@ -23,16 +23,27 @@ const app = new Hono<AppEnv>();
  */
 const nativeFetch = globalThis.fetch.bind(globalThis);
 let egress: { url: string; token: string } | undefined;
-globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
-  const res = await nativeFetch(input, init);
-  if (res.status !== 525 || !egress) return res;
-  // Only retry requests whose body can be replayed (strings/buffers in init), never a consumed stream.
-  if (input instanceof Request && input.body) return res;
+// Replay a request through the egress Worker. Only safe when the body can be replayed
+// (strings/buffers in init), never a consumed stream, so callers pass a replayable init.
+const viaEgress = (input: RequestInfo | URL, init?: RequestInit) => {
   const url = input instanceof Request ? input.url : String(input);
   const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
   headers.set('x-egress-url', url);
-  headers.set('x-egress-token', egress.token);
-  return nativeFetch(egress.url, { method: init?.method ?? (input instanceof Request ? input.method : 'GET'), headers, body: init?.body ?? undefined, signal: init?.signal ?? undefined });
+  headers.set('x-egress-token', egress!.token);
+  return nativeFetch(egress!.url, { method: init?.method ?? (input instanceof Request ? input.method : 'GET'), headers, body: init?.body ?? undefined, signal: init?.signal ?? undefined });
+};
+globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+  const replayable = egress && !(input instanceof Request && input.body);
+  try {
+    const res = await nativeFetch(input, init);
+    // Some non-Cloudflare origins answer 525 from the zone context; others reject at the TLS layer
+    // and throw below. Both succeed from the zone-free egress Worker, so retry once there.
+    if (res.status !== 525 || !replayable) return res;
+    return await viaEgress(input, init);
+  } catch (err) {
+    if (!replayable) throw err;
+    return await viaEgress(input, init);
+  }
 }) as typeof fetch;
 
 app.use('*', async (c, next) => {
