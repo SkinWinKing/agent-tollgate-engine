@@ -4,9 +4,10 @@ export const APP_HTML = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Agent Tollgate — pay-per-call tools for AI agents</title>
-<meta name="description" content="68 pay-per-call tools for AI agents over x402, live agent activity, and a non-custodial swap with rug-pull checks. Sign in with Phantom or MetaMask.">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<title>SKW Trading Market &amp; Tollgate for Agents</title>
+<meta name="description" content="SKW Trading Market: trade Solana tokens from your own wallet with a rug-pull check on every order, watch AI agents trade live, and give your agents 124 pay-per-call x402 tools.">
+<meta property="og:title" content="SKW Trading Market &amp; Tollgate for Agents"><meta property="og:image" content="https://skinwinking.com/brand/skw.webp">
+<link rel="icon" href="/brand/skw-icon.webp" type="image/webp">
 <link rel="alternate" type="text/markdown" href="/llms.txt">
 <style>
 :root{--bg:#000;--panel:#0b0b0d;--line:#2b2618;--text:#ffffff;--muted:#c0c4cc;--acc:#f5c542;--gold2:#ffdf7e;--silver:#d9dde3;--neon:#3ab8ff;--up:#f5c542;--down:#3ab8ff;--warn:#ffb020;--bad:#ff4d5e;--blue:#d9dde3}
@@ -57,22 +58,52 @@ html{scroll-behavior:smooth}.fxg{display:grid;gap:12px;grid-template-columns:rep
 *::-webkit-scrollbar{width:8px;height:8px}*::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#f5c542,#3ab8ff);border-radius:8px}*::-webkit-scrollbar-track{background:#050506}
 .card{border-radius:16px!important}.thead .px{font-size:34px;letter-spacing:-.02em;background:linear-gradient(90deg,#fff,#ffdf7e);-webkit-background-clip:text;background-clip:text;color:transparent}
 .mk table tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--up)}.grid{gap:16px}
-@media(max-width:640px){header{flex-wrap:wrap}.row{grid-template-columns:1fr}}
+.brand img{height:34px;width:auto;filter:drop-shadow(0 0 8px rgba(245,197,66,.35))}.brand span{color:var(--gold2)}a.brand{text-decoration:none}
+.home{padding:28px 0 10px}.crest{width:min(420px,78vw);height:auto;display:block;margin:0 auto 6px;filter:drop-shadow(0 0 40px rgba(245,197,66,.35));animation:float 6s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-8px)}}.home h1 small{display:block;font-size:.5em;letter-spacing:.06em;margin-top:6px}
+.entry .card{cursor:pointer}.entry .card b{font-size:18px;color:#fff;display:block;margin:6px 0}.entry .card .ic{font-size:26px}.entry .card .go{color:var(--gold2);font-size:14px;margin-top:8px;display:inline-block}
+.steps{counter-reset:s}.steps .card b{color:#fff}.steps .card b:before{counter-increment:s;content:counter(s);display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;margin-right:8px;background:var(--acc);color:#000;font-size:13px}
+footer.site{position:relative;z-index:1;border-top:1px solid #1d1d22;margin-top:40px;padding:28px clamp(16px,2vw,32px) 18px;color:var(--muted);font-size:14px}
+.fcols{display:grid;gap:22px;grid-template-columns:2fr repeat(4,1fr)}.fcols h4{color:#fff;margin:0 0 10px;font-size:14px}.fcols a{display:block;color:var(--muted);text-decoration:none;margin:5px 0}.fcols a:hover{color:var(--gold2)}
+.fbrand img{height:44px;width:auto}.fbot{border-top:1px solid #16161a;margin-top:22px;padding-top:14px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;font-size:13px}
+@media(max-width:820px){.fcols{grid-template-columns:1fr 1fr}.fbrand{grid-column:1/-1}}
+@media(max-width:640px){header{flex-wrap:wrap}.row{grid-template-columns:1fr}.brand span{display:none}}
 </style>
 </head>
 <body>
 <canvas id="bg"></canvas>
 <header>
-  <div class="brand"><svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0b0b0d"/><path d="M14 44V28l18-12 18 12v16" fill="none" stroke="#f5c542" stroke-width="5" stroke-linejoin="round"/><path d="M24 44V34h16v10" fill="none" stroke="#d9dde3" stroke-width="5" stroke-linejoin="round"/></svg>Agent Tollgate</div>
-  <nav><button data-t="dash" class="on">Live</button><button data-t="trade">Trade</button><button data-t="freq">Frequencies</button><button data-t="swap">Swap</button></nav>
+  <a class="brand" href="#home" data-go="home"><img src="/brand/skw-icon.webp" alt="SKW" width="52" height="34">SKW <span>Trading Market</span></a>
+  <nav><button data-t="home" class="on">Home</button><button data-t="freq">Agentic trading</button><button data-t="dash">Live</button><button data-t="trade">Trade</button></nav>
   <div><span id="who"></span> <button class="btn sec" id="connect">Connect wallet</button></div>
 </header>
 <main>
-<section id="dash" class="on">
+<section id="home" class="on">
+  <div class="hero home">
+    <img class="crest" src="/brand/skw.webp" alt="SKW crest" width="520" height="341" fetchpriority="high">
+    <h1>SKW Trading Market<small>&amp; Tollgate for Agents</small></h1>
+    <p>Trade any Solana token from your own wallet with a rug-pull check on every order. Watch AI agents trade and talk in real time. Give your own agents 124 pay-per-call tools. Non-custodial: your keys never leave your wallet.</p>
+    <div class="cta"><button class="btn" data-go="trade">Start trading</button><button class="btn sec" data-go="freq">Watch agentic trading</button></div>
+  </div>
+  <div class="grid entry">
+    <div class="card" data-go="freq"><div class="ic">📡</div><b>Agentic trading</b><div class="note">Every real agent call as a tone, a wave and a point in the quantum field. Frequencies, resonance and the council at work.</div><span class="go">Open →</span></div>
+    <div class="card" data-go="dash"><div class="ic">📊</div><b>Live</b><div class="note">Agent traffic today, paid tool calls, tool demand spectrum and the crypto market at a glance.</div><span class="go">Open →</span></div>
+    <div class="card" data-go="trade"><div class="ic">⚡</div><b>Trade</b><div class="note">Solana terminal with live charts and best-price routing through Jupiter. Ethereum, Base, Arbitrum and Polygon through cross-chain swap.</div><span class="go">Open →</span></div>
+    <div class="card" data-go="agents"><div class="ic">🤖</div><b>Tollgate for Agents</b><div class="note">124 tools over x402 and MCP. Agents pay a fraction of a cent in USDC per call. No accounts, no API keys.</div><span class="go">Open →</span></div>
+  </div>
+  <h2>How it works</h2>
+  <div class="grid steps">
+    <div class="card"><b>Connect your wallet</b><p class="note">Phantom, Solflare, Backpack, MetaMask, Rabby, Coinbase and any other wallet in your browser. You sign a message, no transaction and no fee.</p></div>
+    <div class="card"><b>Pick a token</b><p class="note">Live price, liquidity, volume and buy/sell pressure. Every order is checked for rug-pull and honeypot signs before you sign.</p></div>
+    <div class="card"><b>Sign in your wallet</b><p class="note">We build the transaction, you sign it. Funds go straight from your wallet to the DEX. A 0.3% platform fee is shown before you sign.</p></div>
+  </div>
+</section>
+
+<section id="dash">
   <div class="hero">
-    <h1>The live tollgate for AI agents</h1>
-    <p>68 pay-per-call tools for autonomous agents: crypto data, rug-pull audits, swaps, web, documents, threat intel and AI. Agents pay a fraction of a cent in USDC per call. No accounts, no API keys.</p>
-    <div class="cta"><button class="btn" onclick="document.querySelector('nav button[data-t=swap]').click()">Swap with rug-check</button><button class="btn sec" onclick="document.querySelector('nav button[data-t=agents]').click()">Connect your agent</button></div>
+    <h1>Live</h1>
+    <p>What agents are doing on the tollgate right now: requests, paid calls, the most wanted tools and the market.</p>
+    <div class="cta"><button class="btn" data-go="trade">Trade</button><button class="btn sec" data-go="agents">Connect your agent</button></div>
   </div>
   <div class="grid">
     <div class="card"><div class="k"><span class="live"></span>Agent requests today</div><div class="v glow" id="s-today">–</div></div>
@@ -108,6 +139,7 @@ html{scroll-behavior:smooth}.fxg{display:grid;gap:12px;grid-template-columns:rep
         <div class="note" id="t-est" style="margin-top:8px"></div>
         <button class="btn" style="width:100%;margin-top:10px" id="t-go">Connect wallet to trade</button>
         <div class="note" id="t-msg" style="margin-top:8px">Non-custodial: you sign in Phantom, Solflare or Backpack. Every trade is rug-checked first. 0.3% platform fee is included in the route.</div>
+        <button class="btn sec" style="width:100%;margin-top:10px" data-go="swap">Other chains: Ethereum, Base, Arbitrum, Polygon →</button>
       </div>
       <div class="card ob" style="margin-top:12px"><div class="k" style="display:block;margin-bottom:6px">Recent trades</div><div id="tr-l"></div></div>
     </div>
@@ -115,7 +147,7 @@ html{scroll-behavior:smooth}.fxg{display:grid;gap:12px;grid-template-columns:rep
 </section>
 
 <section id="freq">
-  <div class="hero" style="padding-top:18px"><h1 style="font-size:clamp(24px,4vw,40px)">Agents talk in frequencies</h1><p>Every tool has its own carrier frequency. Each real agent call is encoded as 16-FSK: every byte becomes two tones nine hertz apart, then decoded back to text. Press listen to hear the traffic. A visualization of real requests, not a trading signal.</p></div>
+  <div class="hero" style="padding-top:18px"><h1 style="font-size:clamp(24px,4vw,40px)">Agentic trading</h1><p>Agents talk in frequencies. Every tool has its own carrier frequency. Each real agent call is encoded as 16-FSK: every byte becomes two tones nine hertz apart, then decoded back to text. Press listen to hear the traffic. A visualization of real requests, not a trading signal.</p></div>
   <div class="card"><div class="k" style="display:flex;justify-content:space-between;align-items:center"><span>📡 16-FSK agent communication · live <span id="fsk-info" class="note"></span></span><button class="btn sec" id="fsk-snd">🔊 Listen</button></div><canvas id="fsk-c"></canvas><div class="fsklog" id="fsk-log"><div class="note">Waiting for the next agent call…</div></div></div>
   <div class="card" style="margin-top:14px"><div class="k">🧬 Agent DNA · every base pair is one real call (newest on the right). Base from the carrier frequency, double rung = paid call.</div><canvas id="dna-c"></canvas></div>
   <div class="grid" style="grid-template-columns:2fr 1fr;margin-top:14px">
@@ -136,7 +168,7 @@ html{scroll-behavior:smooth}.fxg{display:grid;gap:12px;grid-template-columns:rep
 
 <section id="swap">
   <div class="card" style="max-width:560px">
-    <h2 style="margin-top:0">Swap with a rug-pull check</h2>
+    <a href="#trade" data-go="trade">← Back to Trade</a><h2>Cross-chain swap with a rug-pull check</h2>
     <p class="note">Non-custodial: we build the transaction, you sign it in your own wallet. Keys and funds never touch our servers. A 0.3% platform fee is included in the route.</p>
     <label>Chain</label>
     <select id="chain"><option value="solana">Solana (Phantom)</option><option value="base">Base (MetaMask)</option><option value="ethereum">Ethereum (MetaMask)</option><option value="arbitrum">Arbitrum (MetaMask)</option><option value="polygon">Polygon (MetaMask)</option></select>
@@ -166,9 +198,15 @@ html{scroll-behavior:smooth}.fxg{display:grid;gap:12px;grid-template-columns:rep
 </section>
 </main>
 <div id="wm"><div class="wmbox"><div class="wmhead"><b>Connect a wallet</b><button class="wmx" id="wmx">×</button></div><div class="note">Sign a message to prove ownership. No transaction, no fee, keys never leave your wallet.</div><div id="wlist"></div></div></div>
-<footer style="position:relative;z-index:1;border-top:1px solid #1d1d22;margin-top:30px;padding:18px clamp(12px,2vw,32px);display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between;color:var(--muted);font-size:13px">
-  <span>© Agent Tollgate · non-custodial · your keys never leave your wallet</span>
-  <span><a href="#" id="dev-link">Developers / API</a> · <a href="/llms.txt">llms.txt</a> · <a href="/openapi.json">OpenAPI</a> · <a href="/.well-known/security.txt">Security</a></span>
+<footer class="site">
+  <div class="fcols">
+    <div class="fbrand"><img src="/brand/skw-icon.webp" alt="SKW" width="66" height="44"><p><b style="color:#fff">SKW Trading Market &amp; Tollgate for Agents</b><br>Non-custodial. Your keys never leave your wallet.</p></div>
+    <div><h4>Market</h4><a href="#trade" data-go="trade">Trade</a><a href="#swap" data-go="swap">Cross-chain swap</a><a href="#freq" data-go="freq">Agentic trading</a><a href="#dash" data-go="dash">Live</a></div>
+    <div><h4>Company</h4><a href="/about">About us</a><a href="/contact">Contact</a><a href="mailto:support@skinwinking.com">support@skinwinking.com</a></div>
+    <div><h4>Legal</h4><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a><a href="/cookies">Cookie Policy</a><a href="/risk">Risk Disclosure</a></div>
+    <div><h4>Developers</h4><a href="#agents" data-go="agents">API &amp; tools</a><a href="/llms.txt">llms.txt</a><a href="/openapi.json">OpenAPI</a><a href="/.well-known/agent-card.json">A2A agent card</a><a href="/.well-known/security.txt">Security</a></div>
+  </div>
+  <div class="fbot"><span>© 2026 SKW · SkinWinKing</span><span>Crypto-assets are volatile. Nothing here is investment advice.</span></div>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js" defer></script>
@@ -181,7 +219,9 @@ const TOKENS={
 const CHAIN_ID={ethereum:'0x1',base:'0x2105',arbitrum:'0xa4b1',polygon:'0x89'};
 const EXPLORER={solana:'https://solscan.io/tx/',ethereum:'https://etherscan.io/tx/',base:'https://basescan.org/tx/',arbitrum:'https://arbiscan.io/tx/',polygon:'https://polygonscan.com/tx/'};
 let me=null,lastQuote=null;
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,section').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#'+b.dataset.t).classList.add('on');if(b.dataset.t==='freq')dispatchEvent(new Event('resize'))});
+function go(t){if(!t||!document.getElementById(t)||document.getElementById(t).tagName!=='SECTION')t='home';document.querySelectorAll('nav button,section').forEach(x=>x.classList.remove('on'));$('#'+t).classList.add('on');if(t==='agents')$('#tools').classList.add('on');const b=document.querySelector('nav button[data-t='+t+']');if(b)b.classList.add('on');if(t==='freq')dispatchEvent(new Event('resize'));if(t==='trade'&&window.onTrade)onTrade();try{history.replaceState(null,'','#'+t)}catch(e){}scrollTo({top:0})}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.t));
+document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g){e.preventDefault();go(g.dataset.go)}});
 
 let energy=0.3;
 function countTo(el,to){const from=Number(el.dataset.v||0),t0=performance.now();el.dataset.v=to;const step=t=>{const k=Math.min(1,(t-t0)/900);el.textContent=fmt(Math.round(from+(to-from)*(1-Math.pow(1-k,3))));if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
@@ -237,7 +277,7 @@ async function signIn(w){try{let address,sign;
  }catch(e){$('#wm').classList.remove('on');alertBox(e.message||String(e))}}
 function showMe(){$('#who').textContent=me?(me.wallet?me.wallet+' · ':'')+me.address.slice(0,4)+'…'+me.address.slice(-4):'';$('#connect').textContent=me?'Sign out':'Connect wallet'}
 $('#connect').onclick=async()=>{if(me){await fetch('/auth/logout',{method:'POST'});me=null;wallet=null;showMe()}else openWallets()};
-function alertBox(t){$('#qout').innerHTML='<span class=bad>'+t+'</span>';document.querySelector('nav button[data-t=swap]').click()}
+function alertBox(t){$('#qout').innerHTML='<span class=bad>'+t+'</span>';go('swap')}
 
 async function decimalsOf(chain,token){if(['SOL','USDC','USDT','ETH','POL'].includes(token))return null;const r=await (await fetch('/app/decimals?chain='+chain+'&token='+token)).json();return r.decimals}
 $('#quote').onclick=async()=>{
@@ -401,10 +441,9 @@ if(navigator.modelContext?.provideContext){navigator.modelContext.provideContext
     $('#t-msg').innerHTML='You get ≈ <b>'+(out!=null?pf(out)+' '+(side==='buy'?cur.symbol:'USDC'):'see wallet')+'</b>'+(q.quote&&q.quote.priceImpactPct?' · impact '+(Number(q.quote.priceImpactPct)*100).toFixed(2)+'%':'')+(risk?'<div>Token risk: <b class="'+(risk.riskLevel==='low'||risk.riskLevel==='trusted'?'ok':risk.riskLevel==='medium'?'warn':'bad')+'">'+(risk.riskLevel||'unknown')+'</b>'+(risk.warning?' <span class=bad>'+risk.warning+'</span>':'')+'</div>':'');est();return}
    if(!wallet)return openWallets();const bytes=Uint8Array.from(atob(tq.unsignedTransaction.serialized),c=>c.charCodeAt(0));const vtx=solanaWeb3.VersionedTransaction.deserialize(bytes);const res=await wallet.p.signAndSendTransaction(vtx);const sig=res&&res.signature||res;
    $('#t-msg').innerHTML='<span class=ok>Order sent.</span> <a target=_blank rel=noopener href="https://solscan.io/tx/'+sig+'">View on Solscan</a>';tq=null;est();setTimeout(loadTrades,4000)}catch(e){tq=null;$('#t-msg').innerHTML='<span class=bad>'+(e.message||String(e))+'</span>';est()}};
- document.querySelector('nav button[data-t=trade]').addEventListener('click',()=>{loadMk().then(()=>{setTimeout(()=>loadCandles(true),60);loadTrades()})});
+ window.onTrade=()=>{loadMk().then(()=>{setTimeout(()=>loadCandles(true),60);loadTrades()})};if($('#trade').classList.contains('on'))onTrade();
  setInterval(()=>{if(visible())loadTrades()},8000);setInterval(()=>{if(visible())loadCandles(false)},15000);setInterval(()=>{if(visible()&&!$('#mk-q').value)loadMk()},20000)})();
-// Developer sections are reachable from the footer only.
-$('#dev-link').onclick=e=>{e.preventDefault();document.querySelectorAll('nav button,section').forEach(x=>x.classList.remove('on'));$('#tools').classList.add('on');$('#agents').classList.add('on');scrollTo({top:0,behavior:'smooth'})};
+if(location.hash.length>1)go(location.hash.slice(1));
 fillTokens();loadStats();loadMarket();loadCatalog();setInterval(loadStats,30000);setInterval(loadMarket,60000);
 fetch('/auth/me').then(r=>r.ok?r.json():null).then(m=>{me=m;showMe()});
 </script>

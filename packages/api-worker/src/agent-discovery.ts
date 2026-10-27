@@ -1,3 +1,4 @@
+import { LEGAL_PATHS } from './legal';
 import { ALL_ROUTES, unitsToUsdc, type RouteSpec } from '@tollgate/core';
 import { Hono } from 'hono';
 import type { AppEnv } from './env';
@@ -22,7 +23,7 @@ discovery.use('*', async (c, next) => {
 
 discovery.get('/sitemap.xml', (c) => {
   const o = origin(c.req.url);
-  const paths = ['/llms.txt', '/openapi.json', '/auth.md', '/.well-known/api-catalog', '/.well-known/agent-card.json', '/.well-known/mcp/server-card.json', '/.well-known/agent-skills/index.json', '/skills/agent-tollgate/SKILL.md'];
+  const paths = ['/', ...LEGAL_PATHS, '/llms.txt', '/openapi.json', '/auth.md', '/.well-known/api-catalog', '/.well-known/agent-card.json', '/.well-known/mcp/server-card.json', '/.well-known/agent-skills/index.json', '/skills/agent-tollgate/SKILL.md'];
   const today = new Date().toISOString().slice(0, 10);
   const urls = paths.map((p) => `  <url><loc>${o}${p}</loc><lastmod>${today}</lastmod></url>`).join('\n');
   return c.body(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`, 200, { 'content-type': 'application/xml; charset=utf-8' });

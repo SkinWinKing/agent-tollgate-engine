@@ -7,6 +7,7 @@ import { discovery } from './agent-discovery';
 import { auth } from './auth';
 import { routes, TOOL_HANDLERS } from './routes';
 import { trade } from './trade';
+import { legal } from './legal';
 import { serveApp, webApp } from './web-app';
 
 export { NonceStore } from './nonce-store';
@@ -95,6 +96,7 @@ app.get('/', (c) => {
   return c.redirect('/llms.txt');
 });
 app.route('/', auth);
+app.route('/', legal);
 app.route('/', webApp);
 app.route('/', trade);
 app.get('/llms.txt', (c) => c.body(llmsTxt(context(c.env, c.req.url)), 200, { 'content-type': 'text/markdown; charset=utf-8' }));
