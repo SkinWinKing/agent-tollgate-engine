@@ -12,38 +12,25 @@ const app = new Hono<AppEnv>();
 
 /*
  * Subrequests from the skinwinking.com custom domain to some origins outside Cloudflare (GitHub, open-meteo,
- * Wikipedia, alternative.me, PayAI) fail with a Cloudflare 525, while the same fetch from workers.dev succeeds.
- * Retry those once through this Worker's own workers.dev hostname. The egress route is token-gated so it is not
- * an open proxy.
+ * Wikipedia, alternative.me, PayAI) fail with a Cloudflare 525, while the same fetch from a Worker without the
+ * zone context succeeds. Retry those once through the private tollgate-egress Worker (service binding only).
  */
 const nativeFetch = globalThis.fetch.bind(globalThis);
-let egress: { url: string; token: string } | undefined;
+let egress: Fetcher | undefined;
 globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const res = await nativeFetch(input, init);
   if (res.status !== 525 || !egress) return res;
   // Only retry requests whose body can be replayed (strings/buffers in init), never a consumed stream.
   if (input instanceof Request && input.body) return res;
   const url = input instanceof Request ? input.url : String(input);
-  if (new URL(url).hostname.endsWith('.workers.dev')) return res;
   const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
   headers.set('x-egress-url', url);
-  headers.set('x-egress-token', egress.token);
-  return nativeFetch(egress.url, { method: init?.method ?? (input instanceof Request ? input.method : 'GET'), headers, body: init?.body ?? undefined, signal: init?.signal ?? undefined });
+  return egress.fetch('https://egress.internal/', { method: init?.method ?? (input instanceof Request ? input.method : 'GET'), headers, body: init?.body ?? undefined, signal: init?.signal ?? undefined });
 }) as typeof fetch;
 
 app.use('*', async (c, next) => {
-  if (!egress && c.env.EGRESS_URL && c.env.STATS_TOKEN) egress = { url: c.env.EGRESS_URL, token: c.env.STATS_TOKEN };
+  egress ??= c.env.EGRESS;
   await next();
-});
-
-app.all('/internal/egress', async (c) => {
-  const target = c.req.header('x-egress-url');
-  if (!c.env.STATS_TOKEN || c.req.header('x-egress-token') !== c.env.STATS_TOKEN || !target || !/^https:\/\//.test(target)) return c.json({ error: 'NOT_FOUND' }, 404);
-  const headers = new Headers(c.req.raw.headers);
-  for (const h of ['x-egress-url', 'x-egress-token', 'host', 'cf-connecting-ip', 'x-forwarded-for', 'x-real-ip']) headers.delete(h);
-  const body = ['GET', 'HEAD'].includes(c.req.method) ? undefined : await c.req.arrayBuffer();
-  const res = await nativeFetch(target, { method: c.req.method, headers, body });
-  return new Response(res.body, { status: res.status, headers: res.headers });
 });
 
 app.use('*', cors({ origin: '*', exposeHeaders: ['PAYMENT-REQUIRED', 'PAYMENT-RESPONSE', 'X-PAYMENT-RESPONSE', 'EXTENSION-RESPONSES', 'X-402-Nonce', 'WWW-Authenticate'], allowHeaders: ['Content-Type', 'Authorization', 'PAYMENT-SIGNATURE', 'X-PAYMENT', 'X-402-Signature'] }));

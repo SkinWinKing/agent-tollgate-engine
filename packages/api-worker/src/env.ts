@@ -10,7 +10,7 @@ export interface WorkerEnv {
   CF_ACCOUNT_ID?: string;
   CF_INTEL_TOKEN?: string;
   CF_BROWSER_TOKEN?: string;
-  EGRESS_URL?: string;
+  EGRESS?: Fetcher;
   MERCHANT_PAYOUT_ADDRESS_SOL: string;
   MERCHANT_PAYOUT_ADDRESS_EVM: string;
   SOLANA_RPC_URL?: string;
