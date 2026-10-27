@@ -64,7 +64,7 @@ html{scroll-behavior:smooth}.fxg{display:grid;gap:12px;grid-template-columns:rep
 <canvas id="bg"></canvas>
 <header>
   <div class="brand"><svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0b0b0d"/><path d="M14 44V28l18-12 18 12v16" fill="none" stroke="#f5c542" stroke-width="5" stroke-linejoin="round"/><path d="M24 44V34h16v10" fill="none" stroke="#d9dde3" stroke-width="5" stroke-linejoin="round"/></svg>Agent Tollgate</div>
-  <nav><button data-t="dash" class="on">Live</button><button data-t="trade">Trade</button><button data-t="freq">Frequencies</button><button data-t="swap">Swap</button><button data-t="tools">Tools</button><button data-t="agents">For agents</button></nav>
+  <nav><button data-t="dash" class="on">Live</button><button data-t="trade">Trade</button><button data-t="freq">Frequencies</button><button data-t="swap">Swap</button></nav>
   <div><span id="who"></span> <button class="btn sec" id="connect">Connect wallet</button></div>
 </header>
 <main>
@@ -166,6 +166,10 @@ html{scroll-behavior:smooth}.fxg{display:grid;gap:12px;grid-template-columns:rep
 </section>
 </main>
 <div id="wm"><div class="wmbox"><div class="wmhead"><b>Connect a wallet</b><button class="wmx" id="wmx">×</button></div><div class="note">Sign a message to prove ownership. No transaction, no fee, keys never leave your wallet.</div><div id="wlist"></div></div></div>
+<footer style="position:relative;z-index:1;border-top:1px solid #1d1d22;margin-top:30px;padding:18px clamp(12px,2vw,32px);display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between;color:var(--muted);font-size:13px">
+  <span>© Agent Tollgate · non-custodial · your keys never leave your wallet</span>
+  <span><a href="#" id="dev-link">Developers / API</a> · <a href="/llms.txt">llms.txt</a> · <a href="/openapi.json">OpenAPI</a> · <a href="/.well-known/security.txt">Security</a></span>
+</footer>
 <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js" defer></script>
 <script>
@@ -399,6 +403,8 @@ if(navigator.modelContext?.provideContext){navigator.modelContext.provideContext
    $('#t-msg').innerHTML='<span class=ok>Order sent.</span> <a target=_blank rel=noopener href="https://solscan.io/tx/'+sig+'">View on Solscan</a>';tq=null;est();setTimeout(loadTrades,4000)}catch(e){tq=null;$('#t-msg').innerHTML='<span class=bad>'+(e.message||String(e))+'</span>';est()}};
  document.querySelector('nav button[data-t=trade]').addEventListener('click',()=>{loadMk().then(()=>{setTimeout(()=>loadCandles(true),60);loadTrades()})});
  setInterval(()=>{if(visible())loadTrades()},8000);setInterval(()=>{if(visible())loadCandles(false)},15000);setInterval(()=>{if(visible()&&!$('#mk-q').value)loadMk()},20000)})();
+// Developer sections are reachable from the footer only.
+$('#dev-link').onclick=e=>{e.preventDefault();document.querySelectorAll('nav button,section').forEach(x=>x.classList.remove('on'));$('#tools').classList.add('on');$('#agents').classList.add('on');scrollTo({top:0,behavior:'smooth'})};
 fillTokens();loadStats();loadMarket();loadCatalog();setInterval(loadStats,30000);setInterval(loadMarket,60000);
 fetch('/auth/me').then(r=>r.ok?r.json():null).then(m=>{me=m;showMe()});
 </script>
