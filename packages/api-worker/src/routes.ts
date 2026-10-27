@@ -11,6 +11,7 @@ import { MORE_HANDLERS } from './services/more-tools';
 import { UTIL_HANDLERS } from './services/util-tools';
 import { orderbookImbalance, OrderbookError } from './services/orderbook';
 import { earnVaults, earnDeposit, EarnError } from './services/earn';
+import { trendingTokens, gasPrice, GmgnError } from './services/gmgn';
 import { track, x402PaymentGate } from './x402';
 
 export const routes = new Hono<AppEnv>();
@@ -79,6 +80,8 @@ routes.use(ROUTES.orderbook.path, x402PaymentGate(ROUTES.orderbook));
 routes.use(ROUTES.tokenAudit.path, x402PaymentGate(ROUTES.tokenAudit));
 routes.use(ROUTES.earnVaults.path, x402PaymentGate(ROUTES.earnVaults));
 routes.use(ROUTES.earnDeposit.path, x402PaymentGate(ROUTES.earnDeposit));
+routes.use(ROUTES.trendingTokens.path, x402PaymentGate(ROUTES.trendingTokens));
+routes.use(ROUTES.gasPrice.path, x402PaymentGate(ROUTES.gasPrice));
 
 routes.get(ROUTES.orderbook.path, async (c) => {
   const pair = c.req.query('pair');
@@ -160,6 +163,30 @@ routes.post(ROUTES.earnDeposit.path, async (c) => {
     return c.json(await earnDeposit(params, earnCfg(c.env as unknown as Record<string, unknown>)));
   } catch (err) {
     if (err instanceof EarnError) return c.json({ error: 'EARN_ERROR', message: err.message }, err.status as 400);
+    throw err;
+  }
+});
+
+routes.get(ROUTES.trendingTokens.path, async (c) => {
+  try {
+    const params = new URL(c.req.url).searchParams;
+    const stub = c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global'));
+    c.executionCtx.waitUntil(track(stub, 'sniper:trending'));
+    return c.json(await trendingTokens(params));
+  } catch (err) {
+    if (err instanceof GmgnError) return c.json({ error: 'GMGN_ERROR', message: err.message }, err.status as 400);
+    throw err;
+  }
+});
+
+routes.get(ROUTES.gasPrice.path, async (c) => {
+  try {
+    const params = new URL(c.req.url).searchParams;
+    const stub = c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global'));
+    c.executionCtx.waitUntil(track(stub, 'sniper:gas'));
+    return c.json(await gasPrice(params));
+  } catch (err) {
+    if (err instanceof GmgnError) return c.json({ error: 'GMGN_ERROR', message: err.message }, err.status as 400);
     throw err;
   }
 });

@@ -1,7 +1,7 @@
 import { usdcToUnits } from './constants';
 import type { RouteSpec } from './types';
 
-export const ROUTES: Record<'orderbook' | 'tokenAudit' | 'quote' | 'earnVaults' | 'earnDeposit', RouteSpec> = {
+export const ROUTES: Record<'orderbook' | 'tokenAudit' | 'quote' | 'earnVaults' | 'earnDeposit' | 'trendingTokens' | 'gasPrice', RouteSpec> = {
   orderbook: {
     id: 'orderbook_imbalance',
     method: 'GET',
@@ -213,6 +213,84 @@ export const ROUTES: Record<'orderbook' | 'tokenAudit' | 'quote' | 'earnVaults' 
         unsignedTransaction: { type: 'object' },
         estimate: { type: 'object' },
         fee: { type: 'object' },
+      },
+    },
+  },
+  trendingTokens: {
+    id: 'trending_tokens',
+    method: 'GET',
+    path: '/api/v1/sniper/trending',
+    priceUnits: usdcToUnits(0.05),
+    summary: 'Trending tokens with sniper-grade safety metrics via GMGN',
+    description:
+      'Real-time trending tokens across Solana, Base, BSC and Ethereum ranked by swaps, volume or market cap. Includes sniper-critical data: honeypot flag, bundler rate, rug ratio, smart-degen count, dev-team hold rate, top-10 holder concentration, entrapment ratio and sniper count. Agents use this to discover newly launched tokens and assess risk before sniping. Powered by GMGN.',
+    input: {
+      in: 'query',
+      schema: {
+        type: 'object',
+        properties: {
+          chain: { type: 'string', enum: ['sol', 'base', 'bsc', 'eth'], default: 'sol', description: 'Blockchain' },
+          interval: { type: 'string', enum: ['1m', '5m', '1h', '6h', '24h'], default: '1h', description: 'Trending window' },
+          limit: { type: 'integer', minimum: 1, maximum: 50, default: 20 },
+          orderBy: { type: 'string', enum: ['default', 'swaps', 'volume', 'marketcap', 'holder_count', 'change1h'], default: 'default' },
+          filters: { type: 'string', description: 'Comma-separated: not_honeypot, verified, renounced, has_social, not_wash_trading', default: 'not_honeypot' },
+        },
+        required: [],
+      },
+    },
+    example: {
+      input: { chain: 'sol', interval: '5m', limit: 5, filters: 'not_honeypot,renounced' },
+      output: {
+        chain: 'sol',
+        interval: '5m',
+        count: 5,
+        tokens: [{ symbol: 'DOCK', price: 0.000107, priceChange1h: 32.35, volume: 1874690, marketCap: 105752, sniperCount: 0, smartDegenCount: 140, bundlerRate: 0.27, rugRatio: 0.24, isHoneypot: false }],
+      },
+    },
+    output: {
+      type: 'object',
+      properties: {
+        chain: { type: 'string' },
+        interval: { type: 'string' },
+        count: { type: 'integer' },
+        tokens: { type: 'array' },
+      },
+    },
+  },
+  gasPrice: {
+    id: 'gas_price',
+    method: 'GET',
+    path: '/api/v1/sniper/gas-price',
+    priceUnits: usdcToUnits(0.05),
+    summary: 'Real-time gas/priority fee tiers with MEV protection cost',
+    description:
+      'Current gas price tiers (high/average/low) with estimated confirmation times, MEV-protection fee and native token USD price. Agents use this to set optimal priority fees for snipe transactions. Covers Solana, Base, BSC and Ethereum.',
+    input: {
+      in: 'query',
+      schema: {
+        type: 'object',
+        properties: {
+          chain: { type: 'string', enum: ['sol', 'base', 'bsc', 'eth'], default: 'sol', description: 'Blockchain' },
+        },
+        required: [],
+      },
+    },
+    example: {
+      input: { chain: 'sol' },
+      output: {
+        chain: 'sol',
+        nativeTokenUsd: 101.77,
+        recommended: { fee: '0.0002365', mev: '0.001' },
+        tiers: { high: { fee: '0.01', estimateTimeSec: 2 }, average: { fee: '0.005', estimateTimeSec: 4 }, low: { fee: '0.001', estimateTimeSec: 8 } },
+      },
+    },
+    output: {
+      type: 'object',
+      properties: {
+        chain: { type: 'string' },
+        nativeTokenUsd: { type: 'number' },
+        recommended: { type: 'object' },
+        tiers: { type: 'object' },
       },
     },
   },
