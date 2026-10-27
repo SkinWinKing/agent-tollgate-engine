@@ -1,7 +1,7 @@
-import { EVM_ADDRESS, jsonRpc, SOLANA_ADDRESS } from '@tollgate/core';
+import { EVM_ADDRESS, SOLANA_ADDRESS } from '@tollgate/core';
 import { keccak_256 } from '@noble/hashes/sha3';
 import qrcode from 'qrcode-generator';
-import { cached, DataError } from './data-tools';
+import { cached, DataError, EVM_RPCS, rpcAny } from './data-tools';
 import type { UtilEnv } from './util-tools';
 
 export interface MoreEnv extends UtilEnv {
@@ -11,7 +11,6 @@ export interface MoreEnv extends UtilEnv {
 type Handler = (q: URLSearchParams, env: MoreEnv) => Promise<Record<string, unknown>>;
 
 const UA = 'AgentTollgate/1.0 (+https://skinwinking.com)';
-const ETH_RPC = 'https://ethereum-rpc.publicnode.com';
 const ENS_REGISTRY = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
 
 function need(q: URLSearchParams, key: string, max = 2000): string {
@@ -78,7 +77,7 @@ function decodeString(ret: string | null): string | null {
   return new TextDecoder().decode(Uint8Array.from(data.match(/../g) ?? [], (b) => parseInt(b, 16))) || null;
 }
 
-const ethCall = (to: string, data: string) => jsonRpc<string>(ETH_RPC, 'eth_call', [{ to, data }, 'latest']).catch(() => null);
+const ethCall = (to: string, data: string) => rpcAny<string>(EVM_RPCS.ethereum!, 'eth_call', [{ to, data }, 'latest']).catch(() => null);
 
 async function ensResolver(node: string) {
   const r = decodeAddress(await ethCall(ENS_REGISTRY, '0x0178b8bf' + node.slice(2)));

@@ -27,11 +27,33 @@ export async function cached<T>(env: DataEnv, key: string, ttlSec: number, load:
 
 type Handler = (q: URLSearchParams, env: DataEnv) => Promise<Record<string, unknown>>;
 
-const EVM: Record<string, { rpc: (env: DataEnv) => string; native: string; usdc: string; dexId: string }> = {
-  ethereum: { rpc: () => 'https://ethereum-rpc.publicnode.com', native: 'ETH', usdc: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', dexId: 'ethereum' },
-  base: { rpc: () => 'https://mainnet.base.org', native: 'ETH', usdc: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', dexId: 'base' },
-  polygon: { rpc: (env) => env.evmRpcUrl, native: 'POL', usdc: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', dexId: 'polygon' },
-  arbitrum: { rpc: () => 'https://arb1.arbitrum.io/rpc', native: 'ETH', usdc: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', dexId: 'arbitrum' },
+/** Public RPCs rate-limit shared Cloudflare egress IPs, so each chain has fallbacks tried in order. */
+export const EVM_RPCS: Record<string, string[]> = {
+  ethereum: ['https://ethereum-rpc.publicnode.com', 'https://eth.drpc.org', 'https://1rpc.io/eth'],
+  base: ['https://mainnet.base.org', 'https://base.drpc.org', 'https://1rpc.io/base'],
+  polygon: ['https://polygon.drpc.org'],
+  arbitrum: ['https://arb1.arbitrum.io/rpc', 'https://arbitrum.drpc.org'],
+};
+
+/** jsonRpc against several endpoints in turn; only transport/rate-limit failures move on, RPC errors are returned. */
+export async function rpcAny<T>(urls: string[], method: string, params: unknown[]): Promise<T> {
+  let last: unknown;
+  for (const url of urls) {
+    try {
+      return await jsonRpc<T>(url, method, params);
+    } catch (err) {
+      last = err;
+      if (!/HTTP (429|5\d\d)|fetch failed|timed? ?out|aborted|network/i.test(String(err))) throw err;
+    }
+  }
+  throw last;
+}
+
+const EVM: Record<string, { rpc: (env: DataEnv) => string[]; native: string; usdc: string; dexId: string }> = {
+  ethereum: { rpc: () => EVM_RPCS.ethereum!, native: 'ETH', usdc: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', dexId: 'ethereum' },
+  base: { rpc: () => EVM_RPCS.base!, native: 'ETH', usdc: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', dexId: 'base' },
+  polygon: { rpc: (env) => [env.evmRpcUrl, ...EVM_RPCS.polygon!], native: 'POL', usdc: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', dexId: 'polygon' },
+  arbitrum: { rpc: () => EVM_RPCS.arbitrum!, native: 'ETH', usdc: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', dexId: 'arbitrum' },
 };
 const TOKEN_PROGRAMS = ['TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'];
 const INTERVALS = new Set(['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1w']);
@@ -302,9 +324,9 @@ export const DATA_HANDLERS: Record<string, Handler> = {
     }
     const rpc = EVM[chain]!.rpc(env);
     const [gas, tip, block] = await Promise.all([
-      jsonRpc<string>(rpc, 'eth_gasPrice', []),
-      jsonRpc<string>(rpc, 'eth_maxPriorityFeePerGas', []).catch(() => null),
-      jsonRpc<{ baseFeePerGas?: string; number: string }>(rpc, 'eth_getBlockByNumber', ['latest', false]).catch(() => null),
+      rpcAny<string>(rpc, 'eth_gasPrice', []),
+      rpcAny<string>(rpc, 'eth_maxPriorityFeePerGas', []).catch(() => null),
+      rpcAny<{ baseFeePerGas?: string; number: string }>(rpc, 'eth_getBlockByNumber', ['latest', false]).catch(() => null),
     ]);
     const gwei = (h: string | null | undefined) => (h ? round(hexToNum(h) / 1e9, 6) : null);
     return { chain, unit: 'gwei', gasPrice: gwei(gas), baseFee: gwei(block?.baseFeePerGas), priorityFee: gwei(tip), block: block ? hexToNum(block.number) : null };
@@ -320,7 +342,7 @@ export const DATA_HANDLERS: Record<string, Handler> = {
     const cfg = EVM[chain]!;
     const rpc = cfg.rpc(env);
     const data = '0x70a08231' + address.slice(2).toLowerCase().padStart(64, '0');
-    const [bal, usdc] = await Promise.all([jsonRpc<string>(rpc, 'eth_getBalance', [address, 'latest']), jsonRpc<string>(rpc, 'eth_call', [{ to: cfg.usdc, data }, 'latest']).catch(() => null)]);
+    const [bal, usdc] = await Promise.all([rpcAny<string>(rpc, 'eth_getBalance', [address, 'latest']), rpcAny<string>(rpc, 'eth_call', [{ to: cfg.usdc, data }, 'latest']).catch(() => null)]);
     return {
       chain,
       address,
@@ -346,11 +368,11 @@ export const DATA_HANDLERS: Record<string, Handler> = {
     if (!/^0x[0-9a-fA-F]{64}$/.test(tx)) throw new DataError('invalid transaction hash', 400);
     const rpc = EVM[chain]!.rpc(env);
     const [receipt, head] = await Promise.all([
-      jsonRpc<{ status: string; blockNumber: string; gasUsed: string; from: string; to: string | null } | null>(rpc, 'eth_getTransactionReceipt', [tx]),
-      jsonRpc<string>(rpc, 'eth_blockNumber', []),
+      rpcAny<{ status: string; blockNumber: string; gasUsed: string; from: string; to: string | null } | null>(rpc, 'eth_getTransactionReceipt', [tx]),
+      rpcAny<string>(rpc, 'eth_blockNumber', []),
     ]);
     if (!receipt) {
-      const pending = await jsonRpc<unknown>(rpc, 'eth_getTransactionByHash', [tx]).catch(() => null);
+      const pending = await rpcAny<unknown>(rpc, 'eth_getTransactionByHash', [tx]).catch(() => null);
       return { chain, tx, status: pending ? 'pending' : 'not_found' };
     }
     const block = hexToNum(receipt.blockNumber);
@@ -533,9 +555,9 @@ export const DATA_HANDLERS: Record<string, Handler> = {
       if (!(chain in EVM)) throw new DataError('chain must be ethereum, base, polygon or arbitrum for 0x addresses', 400);
       const rpc = EVM[chain]!.rpc(env);
       const [code, nonce, bal] = await Promise.all([
-        jsonRpc<string>(rpc, 'eth_getCode', [address, 'latest']),
-        jsonRpc<string>(rpc, 'eth_getTransactionCount', [address, 'latest']),
-        jsonRpc<string>(rpc, 'eth_getBalance', [address, 'latest']),
+        rpcAny<string>(rpc, 'eth_getCode', [address, 'latest']),
+        rpcAny<string>(rpc, 'eth_getTransactionCount', [address, 'latest']),
+        rpcAny<string>(rpc, 'eth_getBalance', [address, 'latest']),
       ]);
       const isContract = code !== '0x';
       // EIP-7702 delegated EOAs carry a 23-byte 0xef0100 designator instead of real bytecode.
