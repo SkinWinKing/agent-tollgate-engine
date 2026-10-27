@@ -1,5 +1,6 @@
 import { ROUTES } from './catalog';
 import { usdcToUnits } from './constants';
+import { BATCH2_ROUTES } from './batch2-routes';
 import { UTIL_ROUTES } from './util-routes';
 import type { RouteSpec } from './types';
 
@@ -225,4 +226,4 @@ export const DATA_ROUTES: RouteSpec[] = [
   ),
 ];
 
-export const ALL_ROUTES: RouteSpec[] = [...Object.values(ROUTES), ...DATA_ROUTES, ...UTIL_ROUTES];
+export const ALL_ROUTES: RouteSpec[] = [...Object.values(ROUTES), ...DATA_ROUTES, ...UTIL_ROUTES, ...BATCH2_ROUTES];

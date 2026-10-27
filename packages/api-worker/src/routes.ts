@@ -1,10 +1,11 @@
-import { DATA_ROUTES, loadConfig, ROUTES, SOLANA_ADDRESS, UTIL_ROUTES } from '@tollgate/core';
+import { BATCH2_ROUTES, DATA_ROUTES, loadConfig, ROUTES, SOLANA_ADDRESS, UTIL_ROUTES } from '@tollgate/core';
 import { loadRouterConfig, quoteAndBuild, RouterError } from '@tollgate/omni-router';
 import { Hono } from 'hono';
 import type { AppEnv } from './env';
 import { auditEvmToken, EVM_CHAINS, type EvmChain } from './services/audit-evm';
 import { auditSolanaToken, AuditError } from './services/audit-solana';
 import { DATA_HANDLERS, DataError } from './services/data-tools';
+import { BATCH2_HANDLERS } from './services/batch2-tools';
 import { COUNCIL_HANDLERS } from './services/council-tools';
 import { MORE_HANDLERS } from './services/more-tools';
 import { UTIL_HANDLERS } from './services/util-tools';
@@ -50,9 +51,9 @@ routes.use(ROUTES.quote.path, async (c, next) => {
   await next();
 });
 
-export const TOOL_HANDLERS = { ...DATA_HANDLERS, ...UTIL_HANDLERS, ...MORE_HANDLERS, ...COUNCIL_HANDLERS };
+export const TOOL_HANDLERS = { ...DATA_HANDLERS, ...UTIL_HANDLERS, ...MORE_HANDLERS, ...COUNCIL_HANDLERS, ...BATCH2_HANDLERS };
 
-for (const route of [...DATA_ROUTES, ...UTIL_ROUTES]) {
+for (const route of [...DATA_ROUTES, ...UTIL_ROUTES, ...BATCH2_ROUTES]) {
   const handler = TOOL_HANDLERS[route.id]!;
   routes.use(route.path, x402PaymentGate(route));
   routes.on(route.method, route.path, async (c) => {
