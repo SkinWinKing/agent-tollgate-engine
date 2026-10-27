@@ -81,13 +81,39 @@ webApp.get('/app/events', async (c) => {
   return c.json({ now: Date.now(), events: await stub.recentEvents(since) }, 200, { 'cache-control': 'no-store' });
 });
 
+// Entropy for the quantum field view: ANU quantum RNG when reachable, otherwise the drand public beacon (labelled as such).
+webApp.get('/app/quantum', async (c) => {
+  const cache = c.env.CACHE;
+  const hit = await cache.get('quantum:pool', 'json').catch(() => null);
+  if (hit) return c.json(hit, 200, { 'cache-control': 'no-store' });
+  let out: Record<string, unknown> | null = null;
+  try {
+    const r = await fetch('https://qrng.anu.edu.au/API/jsonI.php?length=64&type=uint8', { signal: AbortSignal.timeout(6000) });
+    const d = (await r.json()) as { success?: boolean; data?: number[] };
+    if (d.success && d.data?.length) out = { source: 'ANU QRNG (vacuum fluctuations)', quantum: true, bytes: d.data, fetchedAt: new Date().toISOString() };
+  } catch {
+    // fall through to drand
+  }
+  if (!out) {
+    try {
+      const d = (await (await fetch('https://api.drand.sh/public/latest', { signal: AbortSignal.timeout(6000) })).json()) as { round: number; randomness: string };
+      out = { source: 'drand League of Entropy beacon (classical, publicly verifiable)', quantum: false, round: d.round, bytes: d.randomness.match(/../g)!.map((h) => parseInt(h, 16)), fetchedAt: new Date().toISOString() };
+    } catch {
+      out = { source: 'unavailable', quantum: false, bytes: [] };
+    }
+  }
+  await cache.put('quantum:pool', JSON.stringify(out), { expirationTtl: 120 }).catch(() => {});
+  return c.json(out, 200, { 'cache-control': 'no-store' });
+});
+
 webApp.get('/app/market', async (c) => {
   const env = toolEnv(c);
-  const [fng, prices] = await Promise.all([
+  const [fng, prices, space] = await Promise.all([
     TOOL_HANDLERS.fear_greed!(new URLSearchParams({ days: '7' }), env).catch(() => null),
+    TOOL_HANDLERS.space_weather!(new URLSearchParams(), env).catch(() => null),
     TOOL_HANDLERS.crypto_price!(new URLSearchParams({ symbols: 'BTC,ETH,SOL,BNB,XRP,DOGE' }), env).catch(() => null),
   ]);
-  return c.json({ fearGreed: fng, prices: prices?.prices ?? [] }, 200, { 'cache-control': 'public, max-age=60' });
+  return c.json({ fearGreed: fng, prices: prices?.prices ?? [], spaceWeather: space }, 200, { 'cache-control': 'public, max-age=60' });
 });
 
 webApp.get('/app/catalog', (c) =>
