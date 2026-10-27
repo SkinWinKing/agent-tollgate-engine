@@ -28,6 +28,8 @@ const CHAIN_ALIASES: Record<string, ChainName> = {
   sol: 'solana', 'solana-mainnet': 'solana', mainnet: 'ethereum', eth: 'ethereum', '1': 'ethereum',
   arb: 'arbitrum', arbitrum_one: 'arbitrum', 'arbitrum-one': 'arbitrum', '42161': 'arbitrum',
   '8453': 'base', 'base-mainnet': 'base', matic: 'polygon', pol: 'polygon', '137': 'polygon',
+  btc: 'bitcoin', btc_mainnet: 'bitcoin', '20000000000001': 'bitcoin',
+  trx: 'tron', trc20: 'tron', trn: 'tron', '728126428': 'tron',
 };
 
 const invalid = (message: string) => new RouterError('INVALID_REQUEST', message, 400, { example: QUOTE_EXAMPLE });

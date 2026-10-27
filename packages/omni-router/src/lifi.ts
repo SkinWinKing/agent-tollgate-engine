@@ -1,4 +1,4 @@
-import { EVM_NATIVE, CHAINS } from './chains';
+import { EVM_NATIVE, CHAINS, type ChainKind } from './chains';
 import { evmFeeOverrides } from './gas';
 import { RouterError, type QuoteRequest, type QuoteResponse, type RouterConfig } from './types';
 
@@ -25,6 +25,13 @@ interface LifiQuote {
 
 const normalizeToken = (chain: keyof typeof CHAINS, token: string): string =>
   CHAINS[chain].kind === 'evm' && token.toLowerCase() === 'native' ? EVM_NATIVE : token;
+
+function feeRecipient(cfg: RouterConfig, kind: ChainKind): string {
+  if (kind === 'utxo' && cfg.merchantBtc) return cfg.merchantBtc;
+  if (kind === 'tvm' && cfg.merchantTrx) return cfg.merchantTrx;
+  if (kind === 'solana') return cfg.merchantSol;
+  return cfg.merchantEvm;
+}
 
 export async function quoteLifi(cfg: RouterConfig, r: QuoteRequest): Promise<QuoteResponse> {
   const fraction = cfg.feeBps / 10_000;
@@ -54,9 +61,14 @@ export async function quoteLifi(cfg: RouterConfig, r: QuoteRequest): Promise<Quo
   const ourAmount = feeCost?.amount && totalBps > 0 ? ((BigInt(feeCost.amount) * BigInt(cfg.feeBps)) / BigInt(totalBps)).toString() : null;
 
   const source = CHAINS[r.fromChain];
+  const recipient = feeRecipient(cfg, source.kind);
   let unsignedTransaction: Record<string, unknown>;
   if (source.kind === 'solana') {
     unsignedTransaction = { chain: 'solana', encoding: 'base64', serialized: quote.transactionRequest.data };
+  } else if (source.kind === 'utxo') {
+    unsignedTransaction = { chain: r.fromChain, encoding: 'lifi-utxo', ...quote.transactionRequest };
+  } else if (source.kind === 'tvm') {
+    unsignedTransaction = { chain: r.fromChain, encoding: 'lifi-tvm', ...quote.transactionRequest };
   } else {
     const rpc = cfg.evmRpcUrls[r.fromChain];
     const overrides = r.priority !== 'none' && rpc ? await evmFeeOverrides(rpc, r.priority) : null;
@@ -89,10 +101,13 @@ export async function quoteLifi(cfg: RouterConfig, r: QuoteRequest): Promise<Quo
       amount: ourAmount,
       totalChargedBps: totalBps || null,
       lifiShareBps: totalBps ? totalBps - cfg.feeBps : null,
-      recipient: cfg.merchantEvm,
-      recipientOwner: cfg.merchantEvm,
+      recipient,
+      recipientOwner: recipient,
       verifiedInQuote: feeCost !== undefined,
     },
-    submission: { method: source.kind === 'solana' ? 'rpc' : 'evm-eth_sendRawTransaction', note: 'Sign unsignedTransaction with the userAddress key and broadcast.' },
+    submission: {
+      method: source.kind === 'solana' ? 'rpc' : source.kind === 'evm' ? 'evm-eth_sendRawTransaction' : `${source.kind}-broadcast`,
+      note: 'Sign unsignedTransaction with the userAddress key and broadcast.',
+    },
   };
 }

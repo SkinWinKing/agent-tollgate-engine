@@ -1,4 +1,4 @@
-export type ChainName = 'solana' | 'ethereum' | 'arbitrum' | 'base' | 'polygon';
+export type ChainName = 'solana' | 'ethereum' | 'arbitrum' | 'base' | 'polygon' | 'bitcoin' | 'tron';
 export type Priority = 'none' | 'fast' | 'turbo';
 
 export interface QuoteRequest {
@@ -16,6 +16,8 @@ export interface QuoteRequest {
 export interface RouterConfig {
   merchantSol: string;
   merchantEvm: string;
+  merchantBtc: string | null;
+  merchantTrx: string | null;
   feeBps: number;
   solanaRpcUrl: string;
   jupiterApiUrl: string;
@@ -28,7 +30,7 @@ export interface RouterConfig {
 
 export interface FeeSummary {
   bps: number;
-  mechanism: 'jupiter-platform-fee' | 'lifi-integrator-fee';
+  mechanism: 'jupiter-platform-fee' | 'lifi-integrator-fee' | 'lifi-intents-escrow';
   collectedIn: string;
   amount: string | null;
   totalChargedBps?: number | null;
@@ -39,7 +41,7 @@ export interface FeeSummary {
 }
 
 export interface QuoteResponse {
-  route: 'jupiter' | 'lifi';
+  route: 'jupiter' | 'lifi' | 'lifi-intents';
   unsignedTransaction: Record<string, unknown>;
   quote: Record<string, unknown>;
   fee: FeeSummary;

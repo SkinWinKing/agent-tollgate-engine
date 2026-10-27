@@ -18,6 +18,8 @@ export interface WorkerEnv {
   BACKUPS: R2Bucket;
   MERCHANT_PAYOUT_ADDRESS_SOL: string;
   MERCHANT_PAYOUT_ADDRESS_EVM: string;
+  MERCHANT_PAYOUT_ADDRESS_BTC?: string;
+  MERCHANT_PAYOUT_ADDRESS_TRX?: string;
   SOLANA_RPC_URL?: string;
   EVM_RPC_URL?: string;
   PLATFORM_FEE_BPS?: string;

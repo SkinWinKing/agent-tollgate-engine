@@ -10,6 +10,7 @@ import { COUNCIL_HANDLERS } from './services/council-tools';
 import { MORE_HANDLERS } from './services/more-tools';
 import { UTIL_HANDLERS } from './services/util-tools';
 import { orderbookImbalance, OrderbookError } from './services/orderbook';
+import { earnVaults, earnDeposit, EarnError } from './services/earn';
 import { track, x402PaymentGate } from './x402';
 
 export const routes = new Hono<AppEnv>();
@@ -76,6 +77,8 @@ for (const route of [...DATA_ROUTES, ...UTIL_ROUTES, ...BATCH2_ROUTES]) {
 routes.use(ROUTES.quote.path, x402PaymentGate(ROUTES.quote));
 routes.use(ROUTES.orderbook.path, x402PaymentGate(ROUTES.orderbook));
 routes.use(ROUTES.tokenAudit.path, x402PaymentGate(ROUTES.tokenAudit));
+routes.use(ROUTES.earnVaults.path, x402PaymentGate(ROUTES.earnVaults));
+routes.use(ROUTES.earnDeposit.path, x402PaymentGate(ROUTES.earnDeposit));
 
 routes.get(ROUTES.orderbook.path, async (c) => {
   const pair = c.req.query('pair');
@@ -126,6 +129,37 @@ routes.post(ROUTES.quote.path, async (c) => {
       c.executionCtx.waitUntil(track(c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global')), `quote_error:${err.code}`));
       return c.json({ error: err.code, message: err.message, ...err.details }, err.status as 400);
     }
+    throw err;
+  }
+});
+
+function earnCfg(env: Record<string, unknown>) {
+  const cfg = loadConfig(env);
+  return { lifiApiKey: (env.LIFI_API_KEY as string) ?? null, lifiIntegrator: (env.LIFI_INTEGRATOR as string) ?? 'agent-tollgate', merchantEvm: cfg.merchantEvm, feeBps: cfg.feeBps };
+}
+
+routes.get(ROUTES.earnVaults.path, async (c) => {
+  try {
+    const params = new URL(c.req.url).searchParams;
+    const stub = c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global'));
+    c.executionCtx.waitUntil(track(stub, 'earn:vaults'));
+    return c.json(await earnVaults(params, earnCfg(c.env as unknown as Record<string, unknown>)));
+  } catch (err) {
+    if (err instanceof EarnError) return c.json({ error: 'EARN_ERROR', message: err.message }, err.status as 400);
+    throw err;
+  }
+});
+
+routes.post(ROUTES.earnDeposit.path, async (c) => {
+  const body = await c.req.json<Record<string, unknown>>().catch(() => null);
+  if (!body || typeof body !== 'object') return c.json({ error: 'INVALID_REQUEST', message: 'JSON object body required' }, 400);
+  const params = new URLSearchParams(Object.entries(body).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)]));
+  try {
+    const stub = c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global'));
+    c.executionCtx.waitUntil(track(stub, 'earn:deposit'));
+    return c.json(await earnDeposit(params, earnCfg(c.env as unknown as Record<string, unknown>)));
+  } catch (err) {
+    if (err instanceof EarnError) return c.json({ error: 'EARN_ERROR', message: err.message }, err.status as 400);
     throw err;
   }
 });

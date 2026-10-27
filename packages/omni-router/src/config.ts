@@ -14,6 +14,8 @@ export function loadRouterConfig(env: RawEnv): RouterConfig {
   return {
     merchantSol: core.merchantSol,
     merchantEvm: core.merchantEvm,
+    merchantBtc: core.merchantBtc,
+    merchantTrx: core.merchantTrx,
     feeBps: core.feeBps,
     solanaRpcUrl: core.solanaRpcUrl,
     jupiterApiUrl: (str(env, 'JUPITER_API_URL') ?? 'https://lite-api.jup.ag/swap/v1').replace(/\/+$/, ''),

@@ -31,11 +31,15 @@ export function loadConfig(env: RawEnv): CoreConfig {
   const merchantEvm = str(env, 'MERCHANT_PAYOUT_ADDRESS_EVM');
   if (!merchantSol || !SOLANA_ADDRESS.test(merchantSol)) throw new Error('MERCHANT_PAYOUT_ADDRESS_SOL missing or invalid');
   if (!merchantEvm || !EVM_ADDRESS.test(merchantEvm)) throw new Error('MERCHANT_PAYOUT_ADDRESS_EVM missing or invalid');
+  const merchantBtc = str(env, 'MERCHANT_PAYOUT_ADDRESS_BTC');
+  const merchantTrx = str(env, 'MERCHANT_PAYOUT_ADDRESS_TRX');
   const feeBps = int(env, 'PLATFORM_FEE_BPS', 30);
   if (feeBps > 1000) throw new Error('PLATFORM_FEE_BPS must be <= 1000');
   return {
     merchantSol,
     merchantEvm,
+    merchantBtc,
+    merchantTrx,
     solanaRpcUrl: str(env, 'SOLANA_RPC_URL') ?? DEFAULT_SOLANA_RPC,
     evmRpcUrl: str(env, 'EVM_RPC_URL') ?? DEFAULT_EVM_RPC,
     evmChainId: POLYGON_CHAIN_ID,
