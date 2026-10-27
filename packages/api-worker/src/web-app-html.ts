@@ -236,7 +236,7 @@ h1,h2{letter-spacing:.02em;text-transform:uppercase}h1{font-weight:800}.home h1 
 <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js" defer></script>
 <script>
-const $=s=>document.querySelector(s), fmt=n=>Number(n).toLocaleString('en-US');
+const $=s=>document.querySelector(s), fmt=n=>Number(n).toLocaleString('en-US'), H=t=>String(t??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const TOKENS={
  solana:[['SOL','SOL',9],['USDC','USDC',6],['USDT','USDT',6],['JUP','JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',6],['BONK','DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',5],['WIF','EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',6]],
  evm:[['ETH','ETH',18],['USDC','USDC',6]],
@@ -302,13 +302,13 @@ async function signIn(w){try{let address,sign;
  if(v.error)throw new Error('Sign-in failed: '+v.error);me={...v,wallet:w.name};wallet=w;$('#wm').classList.remove('on');showMe();
  if(w.kind==='evm'&&$('#chain').value==='solana'){$('#chain').value='base';fillTokens()}if(w.kind==='solana'){$('#chain').value='solana';fillTokens()}
  }catch(e){$('#wm').classList.remove('on');alertBox(e.message||String(e))}}
-function showMe(){if(window.loadKeys)setTimeout(loadKeys,0);
+function showMe(){if(window.loadKeys)setTimeout(loadKeys,0);lastQuote=null;$('#sign').disabled=true;
  if(me&&me.email){$('#who').textContent=me.name||me.email;$('#nav-profile').style.display=''}
  else if(me){$('#who').textContent=(me.wallet?me.wallet+' · ':'')+me.address.slice(0,4)+'…'+me.address.slice(-4);$('#nav-profile').style.display='none'}
  else{$('#who').textContent='';$('#nav-profile').style.display='none'}
  $('#connect').textContent=me?'Sign out':'Sign in'}
 $('#connect').onclick=async()=>{if(me){await fetch('/auth/logout',{method:'POST'});me=null;wallet=null;showMe()}else openWallets()};
-function alertBox(t){$('#qout').innerHTML='<span class=bad>'+t+'</span>';go('swap')}
+function alertBox(t){$('#qout').innerHTML='<span class=bad>'+H(t)+'</span>';go('swap')}
 
 async function decimalsOf(chain,token){if(['SOL','USDC','USDT','ETH','POL'].includes(token))return null;const r=await (await fetch('/app/decimals?chain='+chain+'&token='+token)).json();return r.decimals}
 $('#quote').onclick=async()=>{
@@ -343,7 +343,7 @@ if(navigator.modelContext?.provideContext){navigator.modelContext.provideContext
  function layout(){const R=Math.min(W,H)*0.40;nodes=cat.map((t,i)=>{const a=-Math.PI/2+i*2*Math.PI/cat.length,fam=(t.path.split('/')[3]||'core');return{id:t.id,fam:FAM[fam]?fam:'core',x:W/2+Math.cos(a)*R,y:H/2+Math.sin(a)*R,a,f:0.6+(i%9)*0.22,e:0}})}
  fetch('/app/catalog').then(r=>r.json()).then(j=>{cat=j;fit()});addEventListener('resize',()=>{if(cat.length)fit()});
  function pulse(ev){const qb=Q.bytes.length?Q.bytes.shift():null;ev.q=qb!==null&&Q.quantum;ev.phase=qb===null?0:qb/255*Math.PI*2;Q.n++;if(ev.q)Q.q++;window.onAgentEvent&&window.onAgentEvent(ev);const n=nodes.find(n=>n.id===ev.tool);if(!n)return;const col=ev.q?'210,170,255':ev.source==='mcp'&&ev.outcome==='payment_required'?OUT.mcp:(OUT[ev.outcome]||OUT.payment_required);waves.push({n,col,p:0,q:ev.q,ph:ev.phase});core=1;
-  const f=$('#feed');if(f.firstChild&&f.firstChild.classList&&f.firstChild.classList.contains('note'))f.innerHTML='';const d=document.createElement('div');d.innerHTML='<span class=t>'+new Date(ev.t).toLocaleTimeString()+'</span><span style="color:rgb('+col+')">●</span><span>'+ev.tool.replace(/_/g,' ')+'</span><span class=t>'+ev.source+' · '+ev.country+'</span>';f.prepend(d);while(f.children.length>40)f.lastChild.remove()}
+  const f=$('#feed');if(f.firstChild&&f.firstChild.classList&&f.firstChild.classList.contains('note'))f.innerHTML='';const d=document.createElement('div');d.innerHTML='<span class=t>'+new Date(ev.t).toLocaleTimeString()+'</span><span style="color:rgb('+col+')">●</span><span>'+H(ev.tool.replace(/_/g,' '))+'</span><span class=t>'+H(ev.source)+' · '+H(ev.country)+'</span>';f.prepend(d);while(f.children.length>40)f.lastChild.remove()}
  const Q={bytes:[],quantum:false,src:'',n:0,q:0};async function qpool(){try{const d=await (await fetch('/app/quantum')).json();Q.bytes=Q.bytes.concat(d.bytes||[]).slice(-512);Q.quantum=!!d.quantum;Q.src=d.source;$('#q-src').textContent='Entropy source: '+d.source+(d.round?' · round '+d.round:'')+' · '+(Q.n?Math.round(100*Q.q/Q.n):0)+'% of calls stamped'}catch(e){}}qpool();setInterval(qpool,60000);
  async function poll(){try{const r=await (await fetch('/app/events?since='+since)).json();r.events.forEach((e,i)=>setTimeout(()=>pulse(e),i*180));if(r.events.length)since=r.events[r.events.length-1].t}catch(e){}}
  poll();setInterval(poll,4000);
@@ -444,7 +444,7 @@ if(navigator.modelContext?.provideContext){navigator.modelContext.provideContext
  const pct=n=>'<span class="'+(n>=0?'ok':'bad')+'">'+(n>=0?'+':'')+Number(n).toFixed(2)+'%</span>';
  const visible=()=>$('#trade').classList.contains('on');
  async function loadMk(q){try{markets=(await (await fetch('/app/spot/markets'+(q?'?q='+encodeURIComponent(q):''))).json()).markets;if(!cur&&markets.length)cur=markets[0];else if(cur){const u=markets.find(m=>m.mint===cur.mint);if(u)cur=u}drawMk();head()}catch(e){}}
- function drawMk(){$('#mk-b').innerHTML=markets.map(m=>'<tr data-m="'+m.mint+'" class="'+(cur&&m.mint===cur.mint?'sel':'')+'"><td><b>'+m.symbol+'</b><div class=note>'+usd(m.liquidityUsd)+' liq</div></td><td>'+pf(m.price)+'</td><td>'+pct(m.change24hPct)+'</td></tr>').join('')||'<tr><td colspan=3 class=note>No Solana market found</td></tr>';
+ function drawMk(){$('#mk-b').innerHTML=markets.map(m=>'<tr data-m="'+H(m.mint)+'" class="'+(cur&&m.mint===cur.mint?'sel':'')+'"><td><b>'+H(m.symbol)+'</b><div class=note>'+usd(m.liquidityUsd)+' liq</div></td><td>'+pf(m.price)+'</td><td>'+pct(m.change24hPct)+'</td></tr>').join('')||'<tr><td colspan=3 class=note>No Solana market found</td></tr>';
   document.querySelectorAll('#mk-b tr[data-m]').forEach(r=>r.onclick=()=>{cur=markets.find(m=>m.mint===r.dataset.m);tq=null;drawMk();head();loadCandles(true);loadTrades()})}
  $('#mk-q').oninput=()=>{clearTimeout(searchT);searchT=setTimeout(()=>loadMk($('#mk-q').value.trim()),350)};
  function head(){if(!cur)return;$('#t-px').textContent='$'+pf(cur.price);$('#t-coin').textContent=cur.symbol+' / USD';$('#t-ch1').innerHTML=pct(cur.change1hPct);$('#t-ch').innerHTML=pct(cur.change24hPct);$('#t-liq').textContent=usd(cur.liquidityUsd);$('#t-vol').textContent=usd(cur.volume24hUsd);$('#t-mc').textContent=usd(cur.marketCap);
@@ -467,9 +467,9 @@ if(navigator.modelContext?.provideContext){navigator.modelContext.provideContext
   try{if(!tq){const a=Number($('#t-size').value);if(!(a>0))return;$('#t-msg').textContent='Finding the best route and checking the token…';
     const dec=side==='buy'?6:await decimals(cur.mint);const amount=BigInt(Math.round(a*10**Math.min(dec,9)))*10n**BigInt(Math.max(dec-9,0));
     const body=side==='buy'?{fromChain:'solana',toChain:'solana',inputToken:USDC,outputToken:cur.mint,amount:amount.toString()}:{fromChain:'solana',toChain:'solana',inputToken:cur.mint,outputToken:USDC,amount:amount.toString()};
-    const r=await fetch('/app/quote',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const q=await r.json();if(!r.ok){$('#t-msg').innerHTML='<span class=bad>'+(q.message||q.error)+'</span>';return}
+    const r=await fetch('/app/quote',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const q=await r.json();if(!r.ok){$('#t-msg').innerHTML='<span class=bad>'+H(q.message||q.error)+'</span>';return}
     tq=q;const risk=q.outputTokenRisk;const outDec=side==='buy'?dec:6;const out=q.quote&&q.quote.outAmount?Number(q.quote.outAmount)/10**(side==='buy'?await decimals(cur.mint):6):null;
-    $('#t-msg').innerHTML='You get ≈ <b>'+(out!=null?pf(out)+' '+(side==='buy'?cur.symbol:'USDC'):'see wallet')+'</b>'+(q.quote&&q.quote.priceImpactPct?' · impact '+(Number(q.quote.priceImpactPct)*100).toFixed(2)+'%':'')+(risk?'<div>Token risk: <b class="'+(risk.riskLevel==='low'||risk.riskLevel==='trusted'?'ok':risk.riskLevel==='medium'?'warn':'bad')+'">'+(risk.riskLevel||'unknown')+'</b>'+(risk.warning?' <span class=bad>'+risk.warning+'</span>':'')+'</div>':'');est();return}
+    $('#t-msg').innerHTML='You get ≈ <b>'+(out!=null?pf(out)+' '+(side==='buy'?cur.symbol:'USDC'):'see wallet')+'</b>'+(q.quote&&q.quote.priceImpactPct?' · impact '+(Number(q.quote.priceImpactPct)*100).toFixed(2)+'%':'')+(risk?'<div>Token risk: <b class="'+(risk.riskLevel==='low'||risk.riskLevel==='trusted'?'ok':risk.riskLevel==='medium'?'warn':'bad')+'">'+(risk.riskLevel||'unknown')+'</b>'+(risk.warning?' <span class=bad>'+H(risk.warning)+'</span>':'')+'</div>':'');est();return}
    if(!wallet)return openWallets();const bytes=Uint8Array.from(atob(tq.unsignedTransaction.serialized),c=>c.charCodeAt(0));const vtx=solanaWeb3.VersionedTransaction.deserialize(bytes);const res=await wallet.p.signAndSendTransaction(vtx);const sig=res&&res.signature||res;
    $('#t-msg').innerHTML='<span class=ok>Order sent.</span> <a target=_blank rel=noopener href="https://solscan.io/tx/'+sig+'">View on Solscan</a>';tq=null;est();setTimeout(loadTrades,4000)}catch(e){tq=null;$('#t-msg').innerHTML='<span class=bad>'+(e.message||String(e))+'</span>';est()}};
  window.onTrade=()=>{loadMk().then(()=>{setTimeout(()=>loadCandles(true),60);loadTrades()})};if($('#trade').classList.contains('on'))onTrade();
@@ -503,10 +503,10 @@ if(navigator.modelContext?.provideContext){navigator.modelContext.provideContext
    msg('Still confirming. Your transaction: '+esc(tx)+'. Reload this page in a minute; if the plan is not active, email support@skinwinking.com with the transaction.','bad')}catch(e){msg(e.message||String(e),'bad')}});
  loadKeys()})();
 // Profile load/save
-async function loadProfile(){if(!me||!me.email)return;try{const p=await (await fetch('/app/profile')).json();if(p.wallet_sol)$('#p-sol').value=p.wallet_sol;if(p.wallet_evm)$('#p-evm').value=p.wallet_evm;$('#p-info').innerHTML='Signed in as <b>'+(p.name||p.email)+'</b> ('+p.email+')'}catch(e){}}
+async function loadProfile(){if(!me||!me.email)return;try{const p=await (await fetch('/app/profile')).json();if(p.wallet_sol)$('#p-sol').value=p.wallet_sol;if(p.wallet_evm)$('#p-evm').value=p.wallet_evm;$('#p-info').innerHTML='Signed in as <b>'+H(p.name||p.email)+'</b> ('+H(p.email)+')'}catch(e){}}
 $('#p-save').onclick=async()=>{const sol=$('#p-sol').value.trim(),evm=$('#p-evm').value.trim();
  const r=await fetch('/app/profile',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({wallet_sol:sol,wallet_evm:evm})});const j=await r.json();
- if(r.ok)$('#p-msg').innerHTML='<span class=ok>Wallets saved. You can now trade.</span>';else $('#p-msg').innerHTML='<span class=bad>'+(j.message||j.error)+'</span>'};
+ if(r.ok)$('#p-msg').innerHTML='<span class=ok>Wallets saved. You can now trade.</span>';else $('#p-msg').innerHTML='<span class=bad>'+H(j.message||j.error)+'</span>'};
 if(location.hash.length>1)go(location.hash.slice(1));
 fillTokens();loadStats();loadMarket();loadCatalog();setInterval(loadStats,30000);setInterval(loadMarket,60000);
 fetch('/auth/me').then(r=>r.ok?r.json():null).then(m=>{me=m;showMe();if(me&&me.email)loadProfile()});

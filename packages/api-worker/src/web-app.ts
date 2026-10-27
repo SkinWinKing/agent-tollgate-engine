@@ -1,7 +1,7 @@
 import { ALL_ROUTES, EVM_ADDRESS, jsonRpc, loadConfig, SOLANA_ADDRESS, unitsToUsdc } from '@tollgate/core';
 import { loadRouterConfig, quoteAndBuild, RouterError } from '@tollgate/omni-router';
 import { Hono } from 'hono';
-import { readSession, sameOrigin } from './auth';
+import { ipLimited, readSession, sameOrigin } from './auth';
 import type { AppEnv } from './env';
 import { quickRisk, TOOL_HANDLERS } from './routes';
 import { EVM_RPCS, rpcAny } from './services/data-tools';
@@ -125,6 +125,7 @@ webApp.get('/app/catalog', (c) =>
 );
 
 webApp.get('/app/decimals', async (c) => {
+  if (await ipLimited(c, 'decimals', 30)) return c.json({ error: 'RATE_LIMITED' }, 429);
   const chain = c.req.query('chain') ?? '';
   const token = c.req.query('token') ?? '';
   const env = toolEnv(c);

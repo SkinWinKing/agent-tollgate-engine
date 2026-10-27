@@ -51,6 +51,25 @@ async function activePlan(db: D1Database, wallet: string): Promise<{ plan: PlanI
   return { plan: 'free', expires: null };
 }
 
+/** Records a plan payment once and extends (same tier) or replaces (other tier) the wallet's plan. Null if already used. */
+export async function grantPlan(db: D1Database, wallet: string, planId: PlanId, network: string, reference: string, amountUnits: number): Promise<string | null> {
+  await ensureSchema(db);
+  const ins = await db.prepare('INSERT OR IGNORE INTO plan_payments (reference, wallet, plan, network, amount_units, ts) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(reference, wallet, planId, network, amountUnits, new Date().toISOString())
+    .run();
+  if (!ins.meta.changes) return null;
+  const current = await activePlan(db, wallet);
+  const start = current.plan === planId && current.expires ? new Date(current.expires) : new Date();
+  const expires = new Date(start.getTime() + PLAN_DAYS * 86_400_000).toISOString();
+  await db.prepare('INSERT INTO plans (wallet, plan, expires, updated) VALUES (?, ?, ?, ?) ON CONFLICT(wallet) DO UPDATE SET plan = excluded.plan, expires = excluded.expires, updated = excluded.updated')
+    .bind(wallet, planId, expires, new Date().toISOString())
+    .run();
+  return expires;
+}
+
+export { walletId };
+export type { PlanId };
+
 /** Reads an agent's key from `X-API-Key` or `Authorization: Bearer skw_...`. */
 export const apiKeyFrom = (headers: Headers) => {
   const direct = headers.get('x-api-key')?.trim();
@@ -87,7 +106,9 @@ export async function checkApiKey(c: Context<AppEnv>, route: RouteSpec, key: str
 
 const session = async (c: Context<AppEnv>) => {
   const s = await readSession(c);
-  return s ? { ...s, wallet: walletId(s.address) } : null;
+  // Keys and plans belong to a signature-proven wallet; Google sessions have none.
+  if (!s || !s.address || s.chain === 'google') return null;
+  return { ...s, wallet: walletId(s.address) };
 };
 
 apiKeys.get('/app/keys', async (c) => {
@@ -151,19 +172,10 @@ apiKeys.post('/app/plan', async (c) => {
   if (!result.ok) return c.json({ error: result.reason, retryable: result.retryable }, result.retryable ? 409 : 402);
   const p = result.payment;
   if (walletId(p.payer ?? '') !== s.wallet) return c.json({ error: 'PAYER_MISMATCH', message: 'Pay from the wallet you are signed in with.' }, 402);
-  await ensureSchema(c.env.SALES);
-  const ins = await c.env.SALES.prepare('INSERT OR IGNORE INTO plan_payments (reference, wallet, plan, network, amount_units, ts) VALUES (?, ?, ?, ?, ?, ?)')
-    .bind(p.reference, s.wallet, planId, p.network, p.amountUnits, new Date().toISOString())
-    .run();
-  if (!ins.meta.changes) return c.json({ error: 'PAYMENT_ALREADY_USED' }, 409);
-  // Burn the transaction for x402 too, so a plan payment cannot also pay for a tool call.
-  await c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global')).consume(`pay:${p.network}:${p.reference}`, 7 * 86_400);
-  const current = await activePlan(c.env.SALES, s.wallet);
-  const start = current.plan !== 'free' && current.expires ? new Date(current.expires) : new Date();
-  const expires = new Date(start.getTime() + PLAN_DAYS * 86_400_000).toISOString();
-  await c.env.SALES.prepare('INSERT INTO plans (wallet, plan, expires, updated) VALUES (?, ?, ?, ?) ON CONFLICT(wallet) DO UPDATE SET plan = excluded.plan, expires = excluded.expires, updated = excluded.updated')
-    .bind(s.wallet, planId, expires, new Date().toISOString())
-    .run();
+  // Burn the transaction for x402 too, so a plan payment cannot also pay for a tool call (and vice versa).
+  if (!(await c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global')).consume(`pay:${p.network}:${p.reference}`, 7 * 86_400))) return c.json({ error: 'PAYMENT_ALREADY_USED' }, 409);
+  const expires = await grantPlan(c.env.SALES, s.wallet, planId, p.network, p.reference, p.amountUnits);
+  if (!expires) return c.json({ error: 'PAYMENT_ALREADY_USED' }, 409);
   await c.env.SALES.prepare('INSERT OR IGNORE INTO sales (ts, route, network, amount_units, payer, reference) VALUES (?, ?, ?, ?, ?, ?)')
     .bind(new Date().toISOString(), `plan_${planId}`, p.network, p.amountUnits, p.payer, p.reference)
     .run()

@@ -67,7 +67,7 @@ app.use('/api/v1/*', async (c, next) => {
   const status = c.res.status;
   const outcome = status === 402 ? 'payment_required' : status < 300 ? 'paid' : status === 429 ? 'rate_limited' : status < 500 ? 'client_error' : 'server_error';
   const ua = (c.req.header('user-agent') ?? 'none').split(/[\s/;(]/)[0]!.slice(0, 40);
-  const source = c.req.header('x-tollgate-source') ?? 'http';
+  const source = (c.req.header('x-tollgate-source') ?? 'http').replace(/[^\w.-]/g, '').slice(0, 32) || 'http';
   const tool = ROUTE_BY_PATH.get(c.req.path);
   if (tool) {
     const stub = c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global'));

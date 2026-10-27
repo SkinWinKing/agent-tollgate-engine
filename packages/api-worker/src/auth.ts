@@ -54,12 +54,33 @@ async function hmac(secret: string, data: string): Promise<string> {
   return b64url(new Uint8Array(await crypto.subtle.sign('HMAC', key, te.encode(data))));
 }
 
+/** Constant-time HMAC check. */
+export async function hmacOk(secret: string, data: string, sig: string): Promise<boolean> {
+  let bytes: Uint8Array;
+  try {
+    bytes = fromB64url(sig);
+  } catch {
+    return false;
+  }
+  const key = await crypto.subtle.importKey('raw', te.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+  return crypto.subtle.verify('HMAC', key, new Uint8Array(bytes), te.encode(data));
+}
+export { hmac };
+
+/** Per-IP limit for unauthenticated endpoints that write state. */
+async function ipLimited(c: Context<AppEnv>, bucket: string, perMinute: number): Promise<boolean> {
+  const ip = c.req.header('cf-connecting-ip') ?? 'x';
+  const stub = c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global'));
+  return !(await stub.hit(`rl:${bucket}:${ip}:${Math.floor(Date.now() / 60_000)}`, perMinute, 120));
+}
+export { ipLimited };
+
 export async function readSession(c: Context<AppEnv>): Promise<Session | null> {
   const secret = c.env.SESSION_SECRET;
   const raw = getCookie(c, COOKIE);
   if (!secret || !raw) return null;
   const [payload, sig] = raw.split('.');
-  if (!payload || !sig || (await hmac(secret, payload)) !== sig) return null;
+  if (!payload || !sig || !(await hmacOk(secret, payload, sig))) return null;
   try {
     const s = JSON.parse(new TextDecoder().decode(fromB64url(payload))) as Session;
     return s.exp > Date.now() / 1000 ? s : null;
@@ -81,6 +102,7 @@ function loginMessage(domain: string, address: string, nonce: string, issuedAt: 
 auth.get('/auth/nonce', async (c) => {
   const address = c.req.query('address') ?? '';
   if (!EVM_ADDRESS.test(address) && !SOLANA_ADDRESS.test(address)) return c.json({ error: 'INVALID_ADDRESS' }, 400);
+  if (await ipLimited(c, 'authnonce', 10)) return c.json({ error: 'RATE_LIMITED' }, 429);
   const nonce = hex(crypto.getRandomValues(new Uint8Array(16)));
   const issuedAt = new Date().toISOString();
   await c.env.CACHE.put(`auth:nonce:${nonce}`, JSON.stringify({ address, issuedAt }), { expirationTtl: NONCE_TTL_SEC });
@@ -95,6 +117,8 @@ auth.post('/auth/verify', async (c) => {
   const stored = await c.env.CACHE.get<{ address: string; issuedAt: string }>(`auth:nonce:${body.nonce}`, 'json');
   if (!stored) return c.json({ error: 'NONCE_EXPIRED' }, 400);
   await c.env.CACHE.delete(`auth:nonce:${body.nonce}`);
+  // KV is eventually consistent; the DO burn makes the nonce truly single-use.
+  if (!(await c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global')).consume(`auth:nonce:${body.nonce}`, NONCE_TTL_SEC))) return c.json({ error: 'NONCE_USED' }, 400);
   const message = loginMessage(new URL(c.req.url).host, stored.address, body.nonce, stored.issuedAt);
 
   let ok = false;
@@ -141,6 +165,7 @@ auth.post('/auth/logout', (c) => {
   return c.json({ ok: true });
 });
 
+const GSTATE_COOKIE = 'tg_gstate';
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo';
@@ -161,9 +186,12 @@ async function ensureUsersTable(db: D1Database) {
 auth.get('/auth/google', async (c) => {
   const clientId = c.env.GOOGLE_CLIENT_ID;
   if (!clientId) return c.json({ error: 'GOOGLE_AUTH_DISABLED' }, 503);
+  if (await ipLimited(c, 'gauth', 10)) return c.json({ error: 'RATE_LIMITED' }, 429);
   const origin = new URL(c.req.url).origin;
   const state = hex(crypto.getRandomValues(new Uint8Array(16)));
   await c.env.CACHE.put(`auth:gstate:${state}`, '1', { expirationTtl: NONCE_TTL_SEC });
+  // Bind state to this browser so a callback link from someone else cannot log the victim into the attacker's account.
+  setCookie(c, GSTATE_COOKIE, state, { httpOnly: true, secure: true, sameSite: 'Lax', path: '/auth/google', maxAge: NONCE_TTL_SEC });
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: `${origin}/auth/google/callback`,
@@ -186,6 +214,9 @@ auth.get('/auth/google/callback', async (c) => {
   const error = c.req.query('error');
   if (error) return c.redirect('/#home');
   if (!code || !state) return c.json({ error: 'INVALID_CALLBACK' }, 400);
+  const cookieState = getCookie(c, GSTATE_COOKIE);
+  deleteCookie(c, GSTATE_COOKIE, { path: '/auth/google', secure: true });
+  if (!cookieState || cookieState !== state) return c.json({ error: 'STATE_MISMATCH' }, 400);
 
   const stored = await c.env.CACHE.get(`auth:gstate:${state}`);
   if (!stored) return c.json({ error: 'STATE_EXPIRED' }, 400);
@@ -203,24 +234,24 @@ auth.get('/auth/google/callback', async (c) => {
       grant_type: 'authorization_code',
     }),
   });
-  const tokens = await tokenRes.json<{ access_token?: string; error?: string }>();
-  if (!tokens.access_token) return c.json({ error: 'TOKEN_EXCHANGE_FAILED', detail: tokens.error }, 400);
+  const tokens = await tokenRes.json<{ access_token?: string; error?: string }>().catch(() => ({} as { access_token?: string; error?: string }));
+  if (!tokenRes.ok || !tokens.access_token) return c.json({ error: 'TOKEN_EXCHANGE_FAILED', detail: tokens.error }, 400);
 
   const userRes = await fetch(GOOGLE_USERINFO_URL, { headers: { authorization: `Bearer ${tokens.access_token}` } });
-  const user = await userRes.json<{ email?: string; name?: string; picture?: string }>();
-  if (!user.email) return c.json({ error: 'NO_EMAIL' }, 400);
+  const user = await userRes.json<{ email?: string; verified_email?: boolean; name?: string; picture?: string }>().catch(() => ({} as { email?: string; verified_email?: boolean; name?: string; picture?: string }));
+  if (!userRes.ok || !user.email) return c.json({ error: 'NO_EMAIL' }, 400);
+  if (user.verified_email !== true) return c.json({ error: 'EMAIL_NOT_VERIFIED' }, 403);
 
   await ensureUsersTable(c.env.SALES);
-  const existing = await c.env.SALES.prepare('SELECT wallet_sol, wallet_evm FROM users WHERE email = ?').bind(user.email).first<{ wallet_sol: string | null; wallet_evm: string | null }>();
+  const existing = await c.env.SALES.prepare('SELECT id FROM users WHERE email = ?').bind(user.email).first();
   if (existing) {
     await c.env.SALES.prepare('UPDATE users SET name = ?, picture = ?, updated_at = datetime(\'now\') WHERE email = ?').bind(user.name ?? '', user.picture ?? '', user.email).run();
   } else {
     await c.env.SALES.prepare('INSERT INTO users (email, name, picture) VALUES (?, ?, ?)').bind(user.email, user.name ?? '', user.picture ?? '').run();
   }
 
-  const walletAddr = existing?.wallet_sol || existing?.wallet_evm || '';
-  const chain: Session['chain'] = existing?.wallet_sol ? 'solana' : existing?.wallet_evm ? 'evm' : 'google';
-  const session: Session = { address: walletAddr, chain, email: user.email, name: user.name, exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SEC };
+  // A profile wallet is only a payout/trade address, never an identity: it was not proven by signature.
+  const session: Session = { address: '', chain: 'google', email: user.email, name: user.name, exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SEC };
   const payload = b64url(te.encode(JSON.stringify(session)));
   setCookie(c, COOKIE, `${payload}.${await hmac(sessionSecret, payload)}`, { httpOnly: true, secure: true, sameSite: 'Lax', path: '/', maxAge: SESSION_TTL_SEC });
   return c.redirect('/#home');
