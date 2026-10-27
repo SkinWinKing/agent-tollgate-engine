@@ -145,7 +145,7 @@ app.get('/internal/tool/:id', async (c) => {
   const handler = TOOL_HANDLERS[c.req.param('id')];
   if (!handler) return c.json({ error: 'NOT_FOUND' }, 404);
   try {
-    return c.json(await handler(new URL(c.req.url).searchParams, { ...loadConfig(c.env as unknown as Record<string, unknown>), ai: c.env.AI, cache: c.env.CACHE, intel: { account: c.env.CF_ACCOUNT_ID ?? '', token: c.env.CF_INTEL_TOKEN ?? '' } }));
+    return c.json(await handler(new URL(c.req.url).searchParams, { ...loadConfig(c.env as unknown as Record<string, unknown>), ai: c.env.AI, cache: c.env.CACHE, intel: { account: c.env.CF_ACCOUNT_ID ?? '', token: c.env.CF_INTEL_TOKEN ?? '' }, browserToken: c.env.CF_BROWSER_TOKEN }));
   } catch (err) {
     return c.json({ error: err instanceof Error ? err.message : 'failed' }, 500);
   }

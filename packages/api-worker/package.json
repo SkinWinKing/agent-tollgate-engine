@@ -1,2 +1,1 @@
-{ "name": "@tollgate/api-worker", "version": "1.0.0", "private": true, "type": "module", "main": "src/index.ts",
-  "dependencies": { "@tollgate/core": "*", "@tollgate/omni-router": "*", "@tollgate/discovery": "*", "hono": "^4.13.0" } }
+{"name":"@tollgate/api-worker","version":"1.0.0","private":true,"type":"module","main":"src/index.ts","dependencies":{"@noble/hashes":"^1.8.0","@tollgate/core":"*","@tollgate/discovery":"*","@tollgate/omni-router":"*","hono":"^4.13.0","qrcode-generator":"^1.4.4"}}

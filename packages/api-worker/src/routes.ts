@@ -5,6 +5,7 @@ import type { AppEnv } from './env';
 import { auditEvmToken, EVM_CHAINS, type EvmChain } from './services/audit-evm';
 import { auditSolanaToken, AuditError } from './services/audit-solana';
 import { DATA_HANDLERS, DataError } from './services/data-tools';
+import { MORE_HANDLERS } from './services/more-tools';
 import { UTIL_HANDLERS } from './services/util-tools';
 import { orderbookImbalance, OrderbookError } from './services/orderbook';
 import { track, x402PaymentGate } from './x402';
@@ -48,7 +49,7 @@ routes.use(ROUTES.quote.path, async (c, next) => {
   await next();
 });
 
-export const TOOL_HANDLERS = { ...DATA_HANDLERS, ...UTIL_HANDLERS };
+export const TOOL_HANDLERS = { ...DATA_HANDLERS, ...UTIL_HANDLERS, ...MORE_HANDLERS };
 
 for (const route of [...DATA_ROUTES, ...UTIL_ROUTES]) {
   const handler = TOOL_HANDLERS[route.id]!;
@@ -62,7 +63,7 @@ for (const route of [...DATA_ROUTES, ...UTIL_ROUTES]) {
       params = new URLSearchParams(Object.entries(body).filter(([, v]) => v !== null && v !== undefined).map(([k, v]) => [k, typeof v === 'string' ? v : JSON.stringify(v)]));
     }
     try {
-      return c.json(await handler(params, { ...loadConfig(c.env as unknown as Record<string, unknown>), ai: c.env.AI, cache: c.env.CACHE, intel: { account: c.env.CF_ACCOUNT_ID ?? '', token: c.env.CF_INTEL_TOKEN ?? '' } }));
+      return c.json(await handler(params, { ...loadConfig(c.env as unknown as Record<string, unknown>), ai: c.env.AI, cache: c.env.CACHE, intel: { account: c.env.CF_ACCOUNT_ID ?? '', token: c.env.CF_INTEL_TOKEN ?? '' }, browserToken: c.env.CF_BROWSER_TOKEN }));
     } catch (err) {
       if (err instanceof DataError) return c.json({ error: 'DATA_ERROR', message: err.message }, err.status as 400);
       return c.json({ error: 'UPSTREAM_ERROR', message: err instanceof Error ? err.message : 'upstream failed' }, 502);
