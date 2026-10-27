@@ -43,7 +43,7 @@ export async function rpcAny<T>(urls: string[], method: string, params: unknown[
       return await jsonRpc<T>(url, method, params);
     } catch (err) {
       last = err;
-      if (!/HTTP (429|5\d\d)|fetch failed|timed? ?out|aborted|network/i.test(String(err))) throw err;
+      if (!/HTTP (429|5\d\d)|fetch failed|timed? ?out|aborted|network|limit|rate|quota|capacity|exceeded/i.test(String(err))) throw err;
     }
   }
   throw last;
