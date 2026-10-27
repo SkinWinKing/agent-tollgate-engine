@@ -46,7 +46,6 @@ const context = (env: AppEnv['Bindings'], url: string): DiscoveryContext => {
   return { origin: new URL(url).origin, merchantSol: cfg.merchantSol, merchantEvm: cfg.merchantEvm, feeBps: cfg.feeBps };
 };
 
-const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0b1220"/><path d="M14 44V28l18-12 18 12v16" fill="none" stroke="#4ade80" stroke-width="5" stroke-linejoin="round"/><path d="M24 44V34h16v10" fill="none" stroke="#4ade80" stroke-width="5" stroke-linejoin="round"/></svg>`;
 // One Analytics Engine point per tool call: which tools agents ask for, how often they pay, from where.
 const ROUTE_BY_PATH = new Map(ALL_ROUTES.map((r) => [r.path, r.id]));
 app.use('/api/v1/*', async (c, next) => {
@@ -84,8 +83,8 @@ app.use('*', async (c, next) => {
 
 app.route('/', discovery);
 
-app.get('/favicon.ico', (c) => c.body(FAVICON, 200, { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' }));
-app.get('/favicon.svg', (c) => c.body(FAVICON, 200, { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' }));
+app.get('/favicon.ico', (c) => c.redirect('/brand/skw-coin.webp', 302));
+app.get('/favicon.svg', (c) => c.redirect('/brand/skw-coin.webp', 302));
 app.get('/health', (c) => c.json({ ok: true }));
 // Agents asking for markdown get the catalog directly; everyone else is redirected to it.
 // Agents asking for markdown get the catalog, browsers get the web app, everything else is sent to the catalog.

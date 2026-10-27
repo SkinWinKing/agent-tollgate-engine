@@ -15,8 +15,8 @@ const webp = (b64: string) => {
 const CREST = webp(SKW_CREST_WEBP);
 const ICON = webp(SKW_ICON_WEBP);
 
-legal.get('/brand/skw.webp', (c) => c.body(new Uint8Array(CREST), 200, { 'content-type': 'image/webp', 'cache-control': 'public, max-age=604800, immutable' }));
-legal.get('/brand/skw-icon.webp', (c) => c.body(new Uint8Array(ICON), 200, { 'content-type': 'image/webp', 'cache-control': 'public, max-age=604800, immutable' }));
+legal.get('/brand/skw-crest.webp', (c) => c.body(new Uint8Array(CREST), 200, { 'content-type': 'image/webp', 'cache-control': 'public, max-age=86400' }));
+legal.get('/brand/skw-coin.webp', (c) => c.body(new Uint8Array(ICON), 200, { 'content-type': 'image/webp', 'cache-control': 'public, max-age=86400' }));
 
 const PAGES: Record<string, { title: string; body: string }> = {
   about: {
@@ -115,8 +115,8 @@ const NAV = [
 ];
 
 const page = (slug: string, p: { title: string; body: string }) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${p.title} · SKW Trading Market</title><link rel="icon" href="/brand/skw-icon.webp" type="image/webp"><link rel="canonical" href="https://skinwinking.com/${slug}"><style>${STYLE}</style></head><body>
-<header><a class="brand" href="/"><img src="/brand/skw-icon.webp" alt="SKW" width="48" height="32">SKW <span>Trading Market</span></a><a href="/">← Back to the market</a></header>
+<title>${p.title} · SKW Trading Market</title><link rel="icon" href="/brand/skw-coin.webp" type="image/webp"><link rel="canonical" href="https://skinwinking.com/${slug}"><style>${STYLE}</style></head><body>
+<header><a class="brand" href="/"><img src="/brand/skw-coin.webp" alt="SKW" width="36" height="36">SKW <span>Trading Market</span></a><a href="/">← Back to the market</a></header>
 <main><h1>${p.title}</h1><p class="eff">Effective ${EFFECTIVE}</p>${p.body}</main>
 <footer>${NAV.map(([s, t]) => `<a href="/${s}">${t}</a>`).join('')}<div>© 2026 SKW · SkinWinKing · non-custodial</div></footer></body></html>`;
 

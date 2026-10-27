@@ -6,8 +6,8 @@ export const APP_HTML = `<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SKW Trading Market &amp; Tollgate for Agents</title>
 <meta name="description" content="SKW Trading Market: trade Solana tokens from your own wallet with a rug-pull check on every order, watch AI agents trade live, and give your agents 124 pay-per-call x402 tools.">
-<meta property="og:title" content="SKW Trading Market &amp; Tollgate for Agents"><meta property="og:image" content="https://skinwinking.com/brand/skw.webp">
-<link rel="icon" href="/brand/skw-icon.webp" type="image/webp">
+<meta property="og:title" content="SKW Trading Market &amp; Tollgate for Agents"><meta property="og:image" content="https://skinwinking.com/brand/skw-crest.webp">
+<link rel="icon" href="/brand/skw-coin.webp" type="image/webp">
 <link rel="alternate" type="text/markdown" href="/llms.txt">
 <style>
 :root{--bg:#000;--panel:#0b0b0d;--line:#2b2618;--text:#ffffff;--muted:#c0c4cc;--acc:#f5c542;--gold2:#ffdf7e;--silver:#d9dde3;--neon:#3ab8ff;--up:#f5c542;--down:#3ab8ff;--warn:#ffb020;--bad:#ff4d5e;--blue:#d9dde3}
@@ -58,14 +58,14 @@ html{scroll-behavior:smooth}.fxg{display:grid;gap:12px;grid-template-columns:rep
 *::-webkit-scrollbar{width:8px;height:8px}*::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#f5c542,#3ab8ff);border-radius:8px}*::-webkit-scrollbar-track{background:#050506}
 .card{border-radius:16px!important}.thead .px{font-size:34px;letter-spacing:-.02em;background:linear-gradient(90deg,#fff,#ffdf7e);-webkit-background-clip:text;background-clip:text;color:transparent}
 .mk table tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--up)}.grid{gap:16px}
-.brand img{height:34px;width:auto;filter:drop-shadow(0 0 8px rgba(245,197,66,.35))}.brand span{color:var(--gold2)}a.brand{text-decoration:none}
+.brand img{height:40px;width:auto;filter:drop-shadow(0 0 8px rgba(245,197,66,.35))}.brand span{color:var(--gold2)}a.brand{text-decoration:none}
 .home{padding:28px 0 10px}.crest{width:min(420px,78vw);height:auto;display:block;margin:0 auto 6px;filter:drop-shadow(0 0 40px rgba(245,197,66,.35));animation:float 6s ease-in-out infinite}
 @keyframes float{50%{transform:translateY(-8px)}}.home h1 small{display:block;font-size:.5em;letter-spacing:.06em;margin-top:6px}
 .entry .card{cursor:pointer}.entry .card b{font-size:18px;color:#fff;display:block;margin:6px 0}.entry .card .ic{font-size:26px}.entry .card .go{color:var(--gold2);font-size:14px;margin-top:8px;display:inline-block}
 .steps{counter-reset:s}.steps .card b{color:#fff}.steps .card b:before{counter-increment:s;content:counter(s);display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;margin-right:8px;background:var(--acc);color:#000;font-size:13px}
 footer.site{position:relative;z-index:1;border-top:1px solid #1d1d22;margin-top:40px;padding:28px clamp(16px,2vw,32px) 18px;color:var(--muted);font-size:14px}
 .fcols{display:grid;gap:22px;grid-template-columns:2fr repeat(4,1fr)}.fcols h4{color:#fff;margin:0 0 10px;font-size:14px}.fcols a{display:block;color:var(--muted);text-decoration:none;margin:5px 0}.fcols a:hover{color:var(--gold2)}
-.fbrand img{height:44px;width:auto}.fbot{border-top:1px solid #16161a;margin-top:22px;padding-top:14px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;font-size:13px}
+.fbrand img{height:70px;width:auto}.fbot{border-top:1px solid #16161a;margin-top:22px;padding-top:14px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;font-size:13px}
 @media(max-width:820px){.fcols{grid-template-columns:1fr 1fr}.fbrand{grid-column:1/-1}}
 @media(max-width:640px){header{flex-wrap:wrap}.row{grid-template-columns:1fr}.brand span{display:none}}
 </style>
@@ -73,14 +73,14 @@ footer.site{position:relative;z-index:1;border-top:1px solid #1d1d22;margin-top:
 <body>
 <canvas id="bg"></canvas>
 <header>
-  <a class="brand" href="#home" data-go="home"><img src="/brand/skw-icon.webp" alt="SKW" width="52" height="34">SKW <span>Trading Market</span></a>
+  <a class="brand" href="#home" data-go="home"><img src="/brand/skw-coin.webp" alt="SKW" width="40" height="40">SKW <span>Trading Market</span></a>
   <nav><button data-t="home" class="on">Home</button><button data-t="freq">Agentic trading</button><button data-t="dash">Live</button><button data-t="trade">Trade</button></nav>
   <div><span id="who"></span> <button class="btn sec" id="connect">Connect wallet</button></div>
 </header>
 <main>
 <section id="home" class="on">
   <div class="hero home">
-    <img class="crest" src="/brand/skw.webp" alt="SKW crest" width="520" height="341" fetchpriority="high">
+    <img class="crest" src="/brand/skw-crest.webp" alt="SKW crest" width="624" height="354" fetchpriority="high">
     <h1>SKW Trading Market<small>&amp; Tollgate for Agents</small></h1>
     <p>Trade any Solana token from your own wallet with a rug-pull check on every order. Watch AI agents trade and talk in real time. Give your own agents 124 pay-per-call tools. Non-custodial: your keys never leave your wallet.</p>
     <div class="cta"><button class="btn" data-go="trade">Start trading</button><button class="btn sec" data-go="freq">Watch agentic trading</button></div>
@@ -200,7 +200,7 @@ footer.site{position:relative;z-index:1;border-top:1px solid #1d1d22;margin-top:
 <div id="wm"><div class="wmbox"><div class="wmhead"><b>Connect a wallet</b><button class="wmx" id="wmx">×</button></div><div class="note">Sign a message to prove ownership. No transaction, no fee, keys never leave your wallet.</div><div id="wlist"></div></div></div>
 <footer class="site">
   <div class="fcols">
-    <div class="fbrand"><img src="/brand/skw-icon.webp" alt="SKW" width="66" height="44"><p><b style="color:#fff">SKW Trading Market &amp; Tollgate for Agents</b><br>Non-custodial. Your keys never leave your wallet.</p></div>
+    <div class="fbrand"><img src="/brand/skw-crest.webp" alt="SKW" width="124" height="70"><p><b style="color:#fff">SKW Trading Market &amp; Tollgate for Agents</b><br>Non-custodial. Your keys never leave your wallet.</p></div>
     <div><h4>Market</h4><a href="#trade" data-go="trade">Trade</a><a href="#swap" data-go="swap">Cross-chain swap</a><a href="#freq" data-go="freq">Agentic trading</a><a href="#dash" data-go="dash">Live</a></div>
     <div><h4>Company</h4><a href="/about">About us</a><a href="/contact">Contact</a><a href="mailto:support@skinwinking.com">support@skinwinking.com</a></div>
     <div><h4>Legal</h4><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a><a href="/cookies">Cookie Policy</a><a href="/risk">Risk Disclosure</a></div>
