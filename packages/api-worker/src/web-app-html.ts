@@ -124,10 +124,10 @@ async function loadStats(){try{const s=await (await fetch('/app/stats')).json();
 // Frequency waves: amplitude follows live agent traffic.
 (function waves(){const c=$('#bg'),x=c.getContext('2d');let w,h,t=0;const fit=()=>{w=c.width=innerWidth*devicePixelRatio;h=c.height=innerHeight*devicePixelRatio};fit();addEventListener('resize',fit);
  const cols=['245,197,66','217,221,227','57,255,136','255,223,126'];
- if(matchMedia('(prefers-reduced-motion: reduce)').matches){return}
+ const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
  (function frame(){x.clearRect(0,0,w,h);t+=0.006+energy*0.012;for(let k=0;k<4;k++){x.beginPath();const amp=h*(0.06+energy*0.10)*(1-k*0.15),f=0.0018+k*0.0009,y0=h*(0.30+k*0.05);
   for(let i=0;i<=w;i+=6){const y=y0+Math.sin(i*f+t*(1.4+k*0.35))*amp+Math.sin(i*f*2.7-t*2.1)*amp*0.32;i?x.lineTo(i,y):x.moveTo(i,y)}
-  x.strokeStyle='rgba('+cols[k]+','+(0.55-k*0.1)+')';x.lineWidth=(2.2-k*0.35)*devicePixelRatio;x.shadowColor='rgba('+cols[k]+',.8)';x.shadowBlur=14*devicePixelRatio;x.stroke()}requestAnimationFrame(frame)})()})();
+  x.strokeStyle='rgba('+cols[k]+','+(0.55-k*0.1)+')';x.lineWidth=(2.2-k*0.35)*devicePixelRatio;x.shadowColor='rgba('+cols[k]+',.8)';x.shadowBlur=14*devicePixelRatio;x.stroke()}if(!still)requestAnimationFrame(frame)})();if(still)addEventListener('resize',()=>{fit();})})();
 async function loadMarket(){try{const m=await (await fetch('/app/market')).json();const cards=(m.prices||[]).map(p=>'<div class="card"><div class="k">'+p.symbol.replace('USDT','')+'</div><div class="v">$'+fmt(p.price)+'</div><div class="'+(p.change24hPct>=0?'ok':'bad')+'">'+(p.change24hPct>=0?'+':'')+p.change24hPct+'% 24h</div></div>');
  if(m.fearGreed)cards.unshift('<div class="card"><div class="k">Fear &amp; Greed</div><div class="v">'+m.fearGreed.value+'</div><div class="note">'+m.fearGreed.classification+'</div></div>');$('#market').innerHTML=cards.join('')}catch(e){}}
 async function loadCatalog(){const c=await (await fetch('/app/catalog')).json();const draw=()=>{const f=$('#filter').value.toLowerCase();$('#catalog').innerHTML=c.filter(t=>!f||(t.id+t.summary).toLowerCase().includes(f)).map(t=>'<tr><td><b>'+t.id+'</b><div class=note>'+t.summary+'</div></td><td><span class=pill>'+t.price+'</span></td><td><code>'+t.method+' '+t.path+'</code></td></tr>').join('')};$('#filter').oninput=draw;draw()}
