@@ -48,6 +48,12 @@ code{background:#111113;color:var(--gold2);padding:2px 6px;border-radius:6px;fon
 html{scroll-behavior:smooth}.fxg{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}.fx{position:relative;background:linear-gradient(180deg,rgba(14,14,16,.9),rgba(6,6,8,.8));border:1px solid #1d1d22;border-radius:12px;padding:8px;cursor:pointer;transition:box-shadow .3s,border-color .3s}.fx canvas{width:100%;height:150px;display:block}.fx .l{font-size:12px;color:var(--muted);display:flex;justify-content:space-between}.fx .l b{color:#fff}.fx.act{border-color:var(--acc);box-shadow:0 0 22px rgba(245,197,66,.35)}.fx.pin{border-color:#7df9ff;box-shadow:0 0 22px rgba(125,249,255,.35)}
 #fsk-c,#dna-c{width:100%;height:230px;display:block}.mand{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.mand canvas{width:100%;height:220px;display:block}
 .fsklog{font:12px ui-monospace,Menlo,monospace;max-height:150px;overflow:auto;margin-top:8px}.fsklog div{padding:3px 0;border-bottom:1px solid #151518}.hz{color:#7df9ff}
+.tl{display:grid;grid-template-columns:250px 1fr 270px;gap:12px}.mk{max-height:640px;overflow:auto}.mk table td{padding:6px 6px;font-size:13px;cursor:pointer}.mk tr:hover td{background:rgba(245,197,66,.06)}.mk tr.sel td{background:rgba(245,197,66,.12)}
+.thead{display:flex;flex-wrap:wrap;gap:18px;align-items:baseline;margin-bottom:8px}.thead .px{font-size:26px;font-weight:800;color:#fff}.thead .s{font-size:12px;color:var(--muted)}.thead .s b{display:block;color:#fff;font-size:14px}
+.ivs button{background:none;border:1px solid #232327;color:var(--muted);border-radius:8px;padding:4px 10px;margin-right:4px;cursor:pointer;font:600 12px system-ui}.ivs button.on{color:var(--gold2);border-color:var(--acc)}
+#chart{width:100%;height:440px}.ob{font:12px ui-monospace,Menlo,monospace}.ob div{display:grid;grid-template-columns:1fr 1fr;padding:2px 6px;position:relative}.ob .a{color:#ff6b7a}.ob .b{color:var(--neon)}.ob .mid{text-align:center;color:#fff;font-weight:800;padding:6px;border-top:1px solid #1d1d22;border-bottom:1px solid #1d1d22;display:block}
+.ob i{position:absolute;right:0;top:0;bottom:0;opacity:.14}.side{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.side button{padding:10px;border-radius:10px;border:1px solid #232327;background:#0d0d10;color:#fff;font:700 14px system-ui;cursor:pointer}.side button.long.on{background:rgba(57,255,136,.15);border-color:var(--neon);color:var(--neon)}.side button.short.on{background:rgba(255,77,94,.15);border-color:var(--bad);color:var(--bad)}
+@media(max-width:1100px){.tl{grid-template-columns:1fr}.mk{max-height:300px}}
 @media(max-width:640px){header{flex-wrap:wrap}.row{grid-template-columns:1fr}}
 </style>
 </head>
@@ -55,7 +61,7 @@ html{scroll-behavior:smooth}.fxg{display:grid;gap:12px;grid-template-columns:rep
 <canvas id="bg"></canvas>
 <header>
   <div class="brand"><svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0b0b0d"/><path d="M14 44V28l18-12 18 12v16" fill="none" stroke="#f5c542" stroke-width="5" stroke-linejoin="round"/><path d="M24 44V34h16v10" fill="none" stroke="#d9dde3" stroke-width="5" stroke-linejoin="round"/></svg>Agent Tollgate</div>
-  <nav><button data-t="dash" class="on">Live</button><button data-t="freq">Frequencies</button><button data-t="swap">Swap</button><button data-t="tools">Tools</button><button data-t="agents">For agents</button></nav>
+  <nav><button data-t="dash" class="on">Live</button><button data-t="trade">Trade</button><button data-t="freq">Frequencies</button><button data-t="swap">Swap</button><button data-t="tools">Tools</button><button data-t="agents">For agents</button></nav>
   <div><span id="who"></span> <button class="btn sec" id="connect">Connect wallet</button></div>
 </header>
 <main>
@@ -81,6 +87,30 @@ html{scroll-behavior:smooth}.fxg{display:grid;gap:12px;grid-template-columns:rep
 </section>
 
 
+
+<section id="trade">
+  <div class="tl">
+    <div class="card mk"><input id="mk-q" placeholder="Search market"><table><thead><tr><th>Market</th><th>Price</th><th>24h</th></tr></thead><tbody id="mk-b"></tbody></table></div>
+    <div class="card">
+      <div class="thead"><span class="px" id="t-px">–</span><span class="s">Market<b id="t-coin">BTC-PERP</b></span><span class="s">24h<b id="t-ch">–</b></span><span class="s">Funding / 1h<b id="t-fu">–</b></span><span class="s">Open interest<b id="t-oi">–</b></span><span class="s">24h volume<b id="t-vol">–</b></span><span class="s">Max leverage<b id="t-lev">–</b></span></div>
+      <div class="ivs" id="ivs"><button data-i="1m">1m</button><button data-i="5m">5m</button><button data-i="15m" class="on">15m</button><button data-i="1h">1h</button><button data-i="4h">4h</button><button data-i="1d">1D</button></div>
+      <div id="chart"></div>
+      <p class="note">Live perpetual futures data from Hyperliquid. Spot tokens: use Swap (0.3% fee, rug-checked).</p>
+    </div>
+    <div>
+      <div class="card ob"><div class="k" style="display:block;margin-bottom:6px">Order book</div><div id="ob-a"></div><span class="mid" id="ob-m">–</span><div id="ob-b"></div></div>
+      <div class="card" style="margin-top:12px">
+        <div class="k">Trade perps</div>
+        <div class="side"><button class="long on" id="t-long">Long</button><button class="short" id="t-short">Short</button></div>
+        <label>Size (USD)</label><input id="t-size" type="number" min="10" step="10" value="100">
+        <label>Leverage <b id="t-levv">5x</b></label><input id="t-lever" type="range" min="1" max="20" value="5">
+        <div class="note" id="t-est" style="margin-top:8px"></div>
+        <button class="btn" style="width:100%;margin-top:10px" id="t-go">Connect wallet to trade</button>
+        <div class="note" id="t-msg" style="margin-top:8px">Perps execute on Hyperliquid from your own wallet (non-custodial). Order routing with our builder fee activates once the builder account is funded.</div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <section id="freq">
   <div class="hero" style="padding-top:18px"><h1 style="font-size:clamp(24px,4vw,40px)">Agents talk in frequencies</h1><p>Every tool has its own carrier frequency. Each real agent call is encoded as 16-FSK: every byte becomes two tones nine hertz apart, then decoded back to text. Press listen to hear the traffic. A visualization of real requests, not a trading signal.</p></div>
@@ -135,6 +165,7 @@ html{scroll-behavior:smooth}.fxg{display:grid;gap:12px;grid-template-columns:rep
 </main>
 <div id="wm"><div class="wmbox"><div class="wmhead"><b>Connect a wallet</b><button class="wmx" id="wmx">×</button></div><div class="note">Sign a message to prove ownership. No transaction, no fee, keys never leave your wallet.</div><div id="wlist"></div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js" defer></script>
 <script>
 const $=s=>document.querySelector(s), fmt=n=>Number(n).toLocaleString('en-US');
 const TOKENS={
@@ -328,6 +359,34 @@ if(navigator.modelContext?.provideContext){navigator.modelContext.provideContext
  fetch('/app/market').then(r=>r.json()).then(m=>{const sw=m.spaceWeather;if(sw){kp=sw.kp||0;$('#sch-note').textContent='Kp '+kp+' · storm '+sw.storm+(sw.solarWind?' · solar wind '+Math.round(sw.solarWind.speedKmS)+' km/s':'')+' (NOAA). Visualization, not a trading signal.';$('#sch-hz').textContent=(7.83*(1+kp*0.015)).toFixed(2)+' Hz'}}).catch(()=>{});
  (function frame(){if($('#freq').classList.contains('on')){T+=1;drawFsk();drawDna();drawSpec();drawSch();drawFx()}for(const k in HOT){HOT[k]*=0.985;if(HOT[k]<0.01)delete HOT[k]}energy*=0.999;requestAnimationFrame(frame)})();
 })();
+// Trade: Hyperliquid markets, candles and order book.
+(function tradeView(){let markets=[],coin='BTC',iv='15m',chart=null,cs=null,vs=null,side='long';
+ const usd=n=>n>=1e9?'$'+(n/1e9).toFixed(2)+'B':n>=1e6?'$'+(n/1e6).toFixed(2)+'M':n>=1e3?'$'+(n/1e3).toFixed(1)+'K':'$'+n;
+ const pf=n=>n>=1000?n.toLocaleString('en-US',{maximumFractionDigits:1}):n>=1?n.toFixed(3):n.toPrecision(4);
+ const visible=()=>$('#trade').classList.contains('on');
+ async function loadMk(){try{markets=(await (await fetch('/app/hl/markets')).json()).markets;drawMk();head()}catch(e){}}
+ function drawMk(){const q=$('#mk-q').value.toUpperCase();$('#mk-b').innerHTML=markets.filter(m=>!q||m.coin.includes(q)).slice(0,120).map(m=>'<tr data-c="'+m.coin+'" class="'+(m.coin===coin?'sel':'')+'"><td><b>'+m.coin+'</b><div class=note>'+m.maxLeverage+'x</div></td><td>'+pf(m.mark)+'</td><td class="'+(m.change24hPct>=0?'ok':'bad')+'">'+(m.change24hPct>=0?'+':'')+m.change24hPct+'%</td></tr>').join('');
+  document.querySelectorAll('#mk-b tr').forEach(r=>r.onclick=()=>{coin=r.dataset.c;drawMk();head();loadCandles(true);loadBook()})}
+ $('#mk-q').oninput=drawMk;
+ function head(){const m=markets.find(x=>x.coin===coin);if(!m)return;$('#t-px').textContent=pf(m.mark);$('#t-coin').textContent=m.coin+'-PERP';$('#t-ch').innerHTML='<span class="'+(m.change24hPct>=0?'ok':'bad')+'">'+(m.change24hPct>=0?'+':'')+m.change24hPct+'%</span>';
+  $('#t-fu').textContent=m.fundingHourlyPct+'%';$('#t-oi').textContent=usd(m.openInterestUsd);$('#t-vol').textContent=usd(m.volume24hUsd);$('#t-lev').textContent=m.maxLeverage+'x';$('#t-lever').max=m.maxLeverage;est()}
+ function ensureChart(){if(chart||!window.LightweightCharts)return;const el=$('#chart');chart=LightweightCharts.createChart(el,{width:el.clientWidth,height:440,layout:{background:{color:'transparent'},textColor:'#c0c4cc'},grid:{vertLines:{color:'rgba(217,221,227,.05)'},horzLines:{color:'rgba(217,221,227,.05)'}},rightPriceScale:{borderColor:'#232327'},timeScale:{borderColor:'#232327',timeVisible:true},crosshair:{mode:0}});
+  cs=chart.addCandlestickSeries({upColor:'#39ff88',downColor:'#ff4d5e',borderVisible:false,wickUpColor:'#39ff88',wickDownColor:'#ff4d5e'});vs=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'',color:'rgba(245,197,66,.35)'});vs.priceScale().applyOptions({scaleMargins:{top:0.82,bottom:0}});
+  new ResizeObserver(()=>chart.applyOptions({width:el.clientWidth})).observe(el)}
+ async function loadCandles(fit){ensureChart();if(!cs)return;try{const k=await (await fetch('/app/hl/candles?coin='+coin+'&interval='+iv)).json();cs.setData(k);vs.setData(k.map(c=>({time:c.time,value:c.volume,color:c.close>=c.open?'rgba(57,255,136,.3)':'rgba(255,77,94,.3)'})));if(fit)chart.timeScale().fitContent()}catch(e){}}
+ async function loadBook(){try{const b=await (await fetch('/app/hl/book?coin='+coin)).json();const mx=Math.max(...b.bids.concat(b.asks).map(x=>x.sz));
+  const row=(x,c)=>'<div class="'+c+'"><span>'+pf(x.px)+'</span><span style="text-align:right">'+x.sz+'</span><i style="width:'+(100*x.sz/mx)+'%;background:'+(c==='a'?'#ff4d5e':'#39ff88')+'"></i></div>';
+  $('#ob-a').innerHTML=b.asks.slice(0,12).reverse().map(x=>row(x,'a')).join('');$('#ob-b').innerHTML=b.bids.slice(0,12).map(x=>row(x,'b')).join('');
+  if(b.asks[0]&&b.bids[0]){const mid=(b.asks[0].px+b.bids[0].px)/2,sp=(b.asks[0].px-b.bids[0].px)/mid*1e4;$('#ob-m').textContent=pf(mid)+'  ·  spread '+sp.toFixed(2)+' bps'}}catch(e){}}
+ document.querySelectorAll('#ivs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#ivs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');iv=b.dataset.i;loadCandles(true)});
+ $('#t-long').onclick=()=>{side='long';$('#t-long').classList.add('on');$('#t-short').classList.remove('on');est()};$('#t-short').onclick=()=>{side='short';$('#t-short').classList.add('on');$('#t-long').classList.remove('on');est()};
+ $('#t-lever').oninput=()=>{$('#t-levv').textContent=$('#t-lever').value+'x';est()};$('#t-size').oninput=est;
+ function est(){const m=markets.find(x=>x.coin===coin);if(!m)return;const size=Number($('#t-size').value)||0,lev=Number($('#t-lever').value),margin=size/lev,liq=side==='long'?m.mark*(1-0.9/lev):m.mark*(1+0.9/lev);
+  $('#t-est').innerHTML=(side==='long'?'Long ':'Short ')+coin+' · margin <b>$'+margin.toFixed(2)+'</b> · est. liquidation <b>'+pf(liq)+'</b> · fees ≈ $'+(size*0.00045).toFixed(3)+' exchange + $'+(size*0.0005).toFixed(3)+' platform';
+  $('#t-go').textContent=me?(side==='long'?'Long ':'Short ')+coin+' (activation pending)':'Connect wallet to trade'}
+ $('#t-go').onclick=()=>{if(!me)return openWallets();$('#t-msg').innerHTML='<span class=warn>Perps routing is not live yet: the builder account needs 100 USDC on Hyperliquid before fee-bearing orders can be placed. Spot trading is live in Swap.</span>'};
+ document.querySelector('nav button[data-t=trade]').addEventListener('click',()=>{loadMk();setTimeout(()=>loadCandles(true),50);loadBook()});
+ setInterval(()=>{if(visible())loadBook()},2500);setInterval(()=>{if(visible())loadCandles(false)},6000);setInterval(()=>{if(visible())loadMk()},15000)})();
 fillTokens();loadStats();loadMarket();loadCatalog();setInterval(loadStats,30000);setInterval(loadMarket,60000);
 fetch('/auth/me').then(r=>r.ok?r.json():null).then(m=>{me=m;showMe()});
 </script>

@@ -16,12 +16,17 @@ export interface DataEnv {
   cache?: KVNamespace;
 }
 
-/** Caches slow-changing upstream JSON in KV so repeat calls skip the upstream (KV minimum TTL is 60 s). */
-export async function cached<T>(env: DataEnv, key: string, ttlSec: number, load: () => Promise<T>): Promise<T> {
-  const hit = await env.cache?.get<T>(key, 'json').catch(() => null);
-  if (hit) return hit;
+/**
+ * Caches slow-changing upstream JSON in the Cloudflare Cache API (per data centre, no write quota), so repeat calls
+ * skip the upstream. KV is kept for sign-in nonces, whose free tier allows only 1,000 writes a day.
+ */
+export async function cached<T>(_env: DataEnv, key: string, ttlSec: number, load: () => Promise<T>): Promise<T> {
+  const req = new Request(`https://tollgate-cache.internal/${encodeURIComponent(key)}`);
+  const store = (globalThis as unknown as { caches?: { default?: Cache } }).caches?.default;
+  const hit = await store?.match(req).catch(() => undefined);
+  if (hit) return (await hit.json()) as T;
   const value = await load();
-  await env.cache?.put(key, JSON.stringify(value), { expirationTtl: Math.max(60, ttlSec) }).catch(() => {});
+  await store?.put(req, new Response(JSON.stringify(value), { headers: { 'content-type': 'application/json', 'cache-control': `max-age=${Math.max(30, ttlSec)}` } })).catch(() => {});
   return value;
 }
 
