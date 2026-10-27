@@ -13,6 +13,8 @@ export interface WorkerEnv {
   EGRESS_URL?: string;
   EGRESS_TOKEN?: string;
   SESSION_SECRET?: string;
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
   BACKUPS: R2Bucket;
   MERCHANT_PAYOUT_ADDRESS_SOL: string;
   MERCHANT_PAYOUT_ADDRESS_EVM: string;

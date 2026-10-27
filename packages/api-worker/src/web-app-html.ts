@@ -78,8 +78,8 @@ h1,h2{letter-spacing:.02em;text-transform:uppercase}h1{font-weight:800}.home h1 
 <canvas id="bg"></canvas>
 <header>
   <a class="brand" href="#home" data-go="home"><img src="/brand/skw-coin.webp" alt="SKW" width="40" height="40">SKW <span>Trading Market</span></a>
-  <nav><button data-t="home" class="on">Home</button><button data-t="freq">Agentic trading</button><button data-t="dash">Live</button><button data-t="trade">Trade</button><button data-t="keys">API keys</button></nav>
-  <div><span id="who"></span> <button class="btn sec" id="connect">Connect wallet</button></div>
+  <nav><button data-t="home" class="on">Home</button><button data-t="freq">Agentic trading</button><button data-t="dash">Live</button><button data-t="trade">Trade</button><button data-t="keys">API keys</button><button data-t="profile" id="nav-profile" style="display:none">Profile</button></nav>
+  <div><span id="who"></span> <button class="btn sec" id="connect">Sign in</button></div>
 </header>
 <main>
 <section id="home" class="on">
@@ -211,7 +211,18 @@ h1,h2{letter-spacing:.02em;text-transform:uppercase}h1{font-weight:800}.home h1 
   <div class="card"><code>curl -i https://skinwinking.com/api/v1/data/fear-greed</code><p class="note">→ HTTP 402 with <code>PAYMENT-REQUIRED</code>. Pay with any x402 client (e.g. <code>@x402/fetch</code>) and repeat the request.</p></div>
 </section>
 </main>
-<div id="wm"><div class="wmbox"><div class="wmhead"><b>Connect a wallet</b><button class="wmx" id="wmx">×</button></div><div class="note">Sign a message to prove ownership. No transaction, no fee, keys never leave your wallet.</div><div id="wlist"></div></div></div>
+<section id="profile">
+  <div class="card" style="max-width:560px;margin:40px auto">
+    <h2>Profile</h2>
+    <div id="p-info" class="note">Loading…</div>
+    <label>Solana wallet address</label><input id="p-sol" placeholder="e.g. DSvMhi…">
+    <label>EVM wallet address (Ethereum, Base, Polygon…)</label><input id="p-evm" placeholder="e.g. 0x64f0…">
+    <button class="btn" style="width:100%;margin-top:14px" id="p-save">Save wallets</button>
+    <div id="p-msg" class="note" style="margin-top:10px">Add your wallet addresses to trade. Your keys stay yours — we never hold funds.</div>
+  </div>
+</section>
+
+<div id="wm"><div class="wmbox"><div class="wmhead"><b>Sign in</b><button class="wmx" id="wmx">×</button></div><div class="note">Sign in with Google or connect a wallet. No transaction, no fee.</div><div id="wlist"></div></div></div>
 <footer class="site">
   <div class="fcols">
     <div class="fbrand"><img src="/brand/skw-crest.webp" alt="SKW" width="124" height="70"><p><b style="color:#fff">SKW Trading Market &amp; Tollgate for Agents</b><br>Non-custodial. Your keys never leave your wallet.</p></div>
@@ -270,6 +281,8 @@ function solanaWallets(){const out=[];const add=(name,p,icon,url)=>out.push({nam
 const EVM_INSTALL=[['MetaMask','https://metamask.io/download/','#f6851b'],['Coinbase Wallet','https://www.coinbase.com/wallet/downloads','#0052ff'],['Rabby','https://rabby.io/','#7084ff'],['Trust Wallet','https://trustwallet.com/download','#3375bb']];
 function wbtn(name,icon,label,act){const b=document.createElement('button');b.className='wbtn';b.innerHTML=(icon&&icon.startsWith('data:')?'<img alt="" src="'+icon+'">':'<span class="wi" style="background:'+(icon||'#333')+'">'+name[0]+'</span>')+'<span>'+name+'</span><small>'+label+'</small>';b.onclick=act;return b}
 function openWallets(){const l=$('#wlist');l.innerHTML='';
+ const gg=document.createElement('div');gg.className='wgrp';gg.textContent='Quick sign in';l.appendChild(gg);
+ const gb=document.createElement('button');gb.className='wbtn';gb.innerHTML='<span class="wi" style="background:#4285f4;color:#fff;font-size:16px">G</span><span>Sign in with Google</span><small>No extension needed</small>';gb.onclick=()=>{window.location.href='/auth/google'};l.appendChild(gb);
  const g1=document.createElement('div');g1.className='wgrp';g1.textContent='Solana';l.appendChild(g1);
  solanaWallets().forEach(w=>l.appendChild(wbtn(w.name,w.icon,w.p?'Detected':'Install',()=>w.p?signIn({kind:'solana',name:w.name,p:w.p}):open(w.url,'_blank'))));
  const g2=document.createElement('div');g2.className='wgrp';g2.textContent='Ethereum, Base, Arbitrum, Polygon';l.appendChild(g2);
@@ -289,7 +302,11 @@ async function signIn(w){try{let address,sign;
  if(v.error)throw new Error('Sign-in failed: '+v.error);me={...v,wallet:w.name};wallet=w;$('#wm').classList.remove('on');showMe();
  if(w.kind==='evm'&&$('#chain').value==='solana'){$('#chain').value='base';fillTokens()}if(w.kind==='solana'){$('#chain').value='solana';fillTokens()}
  }catch(e){$('#wm').classList.remove('on');alertBox(e.message||String(e))}}
-function showMe(){if(window.loadKeys)setTimeout(loadKeys,0);$('#who').textContent=me?(me.wallet?me.wallet+' · ':'')+me.address.slice(0,4)+'…'+me.address.slice(-4):'';$('#connect').textContent=me?'Sign out':'Connect wallet'}
+function showMe(){if(window.loadKeys)setTimeout(loadKeys,0);
+ if(me&&me.email){$('#who').textContent=me.name||me.email;$('#nav-profile').style.display=''}
+ else if(me){$('#who').textContent=(me.wallet?me.wallet+' · ':'')+me.address.slice(0,4)+'…'+me.address.slice(-4);$('#nav-profile').style.display='none'}
+ else{$('#who').textContent='';$('#nav-profile').style.display='none'}
+ $('#connect').textContent=me?'Sign out':'Sign in'}
 $('#connect').onclick=async()=>{if(me){await fetch('/auth/logout',{method:'POST'});me=null;wallet=null;showMe()}else openWallets()};
 function alertBox(t){$('#qout').innerHTML='<span class=bad>'+t+'</span>';go('swap')}
 
@@ -485,9 +502,14 @@ if(navigator.modelContext?.provideContext){navigator.modelContext.provideContext
     if(r.ok){msg(K.plans[plan].name+' plan active until '+j.expires.slice(0,10)+'.','ok');return loadKeys()}if(!j.retryable)return msg('Payment not accepted: '+(j.message||j.error)+'. Transaction: '+esc(tx),'bad');await new Promise(z=>setTimeout(z,5000))}
    msg('Still confirming. Your transaction: '+esc(tx)+'. Reload this page in a minute; if the plan is not active, email support@skinwinking.com with the transaction.','bad')}catch(e){msg(e.message||String(e),'bad')}});
  loadKeys()})();
+// Profile load/save
+async function loadProfile(){if(!me||!me.email)return;try{const p=await (await fetch('/app/profile')).json();if(p.wallet_sol)$('#p-sol').value=p.wallet_sol;if(p.wallet_evm)$('#p-evm').value=p.wallet_evm;$('#p-info').innerHTML='Signed in as <b>'+(p.name||p.email)+'</b> ('+p.email+')'}catch(e){}}
+$('#p-save').onclick=async()=>{const sol=$('#p-sol').value.trim(),evm=$('#p-evm').value.trim();
+ const r=await fetch('/app/profile',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({wallet_sol:sol,wallet_evm:evm})});const j=await r.json();
+ if(r.ok)$('#p-msg').innerHTML='<span class=ok>Wallets saved. You can now trade.</span>';else $('#p-msg').innerHTML='<span class=bad>'+(j.message||j.error)+'</span>'};
 if(location.hash.length>1)go(location.hash.slice(1));
 fillTokens();loadStats();loadMarket();loadCatalog();setInterval(loadStats,30000);setInterval(loadMarket,60000);
-fetch('/auth/me').then(r=>r.ok?r.json():null).then(m=>{me=m;showMe()});
+fetch('/auth/me').then(r=>r.ok?r.json():null).then(m=>{me=m;showMe();if(me&&me.email)loadProfile()});
 </script>
 </body>
 </html>`;

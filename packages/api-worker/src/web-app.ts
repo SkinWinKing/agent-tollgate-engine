@@ -145,22 +145,55 @@ webApp.get('/app/decimals', async (c) => {
 });
 
 // Signed-in wallets get swap quotes free; the platform fee inside the built transaction is the revenue.
+webApp.get('/app/profile', async (c) => {
+  const session = await readSession(c);
+  if (!session) return c.json({ error: 'NOT_SIGNED_IN' }, 401);
+  if (!session.email) return c.json({ address: session.address, chain: session.chain });
+  const user = await c.env.SALES.prepare('SELECT email, name, picture, wallet_sol, wallet_evm FROM users WHERE email = ?').bind(session.email).first();
+  return user ? c.json(user) : c.json({ email: session.email, name: session.name });
+});
+
+webApp.post('/app/profile', async (c) => {
+  if (!sameOrigin(c)) return c.json({ error: 'FORBIDDEN' }, 403);
+  const session = await readSession(c);
+  if (!session || !session.email) return c.json({ error: 'NOT_SIGNED_IN' }, 401);
+  const body = await c.req.json<{ wallet_sol?: string; wallet_evm?: string }>().catch(() => null);
+  if (!body) return c.json({ error: 'INVALID_REQUEST' }, 400);
+  if (body.wallet_sol && !SOLANA_ADDRESS.test(body.wallet_sol)) return c.json({ error: 'INVALID_SOL_ADDRESS' }, 400);
+  if (body.wallet_evm && !EVM_ADDRESS.test(body.wallet_evm)) return c.json({ error: 'INVALID_EVM_ADDRESS' }, 400);
+  const sets: string[] = [];
+  const vals: string[] = [];
+  if (body.wallet_sol !== undefined) { sets.push('wallet_sol = ?'); vals.push(body.wallet_sol || ''); }
+  if (body.wallet_evm !== undefined) { sets.push('wallet_evm = ?'); vals.push(body.wallet_evm || ''); }
+  if (!sets.length) return c.json({ error: 'NOTHING_TO_UPDATE' }, 400);
+  sets.push("updated_at = datetime('now')");
+  await c.env.SALES.prepare(`UPDATE users SET ${sets.join(', ')} WHERE email = ?`).bind(...vals, session.email).run();
+  return c.json({ ok: true });
+});
+
 webApp.post('/app/quote', async (c) => {
   if (!sameOrigin(c)) return c.json({ error: 'FORBIDDEN' }, 403);
   const session = await readSession(c);
   if (!session) return c.json({ error: 'NOT_SIGNED_IN', message: 'Connect and sign in with your wallet first' }, 401);
+  let userAddress = session.address;
+  let userChain = session.chain;
+  if (session.chain === 'google' && session.email) {
+    const user = await c.env.SALES.prepare('SELECT wallet_sol, wallet_evm FROM users WHERE email = ?').bind(session.email).first<{ wallet_sol: string | null; wallet_evm: string | null }>();
+    if (user?.wallet_sol) { userAddress = user.wallet_sol; userChain = 'solana'; }
+    else if (user?.wallet_evm) { userAddress = user.wallet_evm; userChain = 'evm'; }
+    else return c.json({ error: 'NO_WALLET', message: 'Add a wallet address in your profile before trading' }, 400);
+  }
   const stub = c.env.NONCE_STORE.get(c.env.NONCE_STORE.idFromName('global'));
-  if (!(await stub.hit(`rl:appquote:${session.address}:${Math.floor(Date.now() / 60_000)}`, QUOTES_PER_MINUTE, 120))) {
+  if (!(await stub.hit(`rl:appquote:${userAddress}:${Math.floor(Date.now() / 60_000)}`, QUOTES_PER_MINUTE, 120))) {
     return c.json({ error: 'RATE_LIMITED', message: `Limit is ${QUOTES_PER_MINUTE} quotes per minute` }, 429);
   }
   const body = await c.req.json<Record<string, unknown>>().catch(() => null);
   if (!body) return c.json({ error: 'INVALID_REQUEST' }, 400);
   const fromChain = String(body.fromChain ?? '');
-  const familyOk = session.chain === 'solana' ? SOLANA_CHAINS.has(fromChain) : EVM_CHAINS.has(fromChain);
-  if (!familyOk) return c.json({ error: 'CHAIN_MISMATCH', message: `Signed in with a ${session.chain} wallet; pick a matching source chain` }, 400);
+  const familyOk = userChain === 'solana' ? SOLANA_CHAINS.has(fromChain) : EVM_CHAINS.has(fromChain);
+  if (!familyOk) return c.json({ error: 'CHAIN_MISMATCH', message: `Signed in with a ${userChain} wallet; pick a matching source chain` }, 400);
   try {
-    // The signer is always the signed-in wallet, so quotes cannot be built for someone else.
-    const quote = await quoteAndBuild(loadRouterConfig(c.env as unknown as Record<string, unknown>), { ...body, userAddress: session.address, destinationAddress: body.destinationAddress ?? session.address });
+    const quote = await quoteAndBuild(loadRouterConfig(c.env as unknown as Record<string, unknown>), { ...body, userAddress, destinationAddress: body.destinationAddress ?? userAddress });
     const outputMint = quote.route === 'jupiter' ? String(quote.quote.outputMint ?? '') : '';
     const outputTokenRisk = outputMint ? await quickRisk(toolEnv(c).solanaRpcUrl, outputMint) : undefined;
     c.executionCtx.waitUntil(stub.bump(`stat:${new Date().toISOString().slice(0, 10)}:appquote:${quote.route}`, 60 * 86_400).catch(() => {}));

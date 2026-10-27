@@ -9,6 +9,7 @@ import { routes, TOOL_HANDLERS } from './routes';
 import { trade } from './trade';
 import { apiKeyFrom, apiKeys } from './api-keys';
 import { legal } from './legal';
+import { cryptapi } from './cryptapi';
 import { serveApp, webApp } from './web-app';
 
 export { NonceStore } from './nonce-store';
@@ -111,6 +112,7 @@ app.route('/', apiKeys);
 app.route('/', legal);
 app.route('/', webApp);
 app.route('/', trade);
+app.route('/', cryptapi);
 app.get('/llms.txt', (c) => c.body(llmsTxt(context(c.env, c.req.url)), 200, { 'content-type': 'text/markdown; charset=utf-8' }));
 app.get('/openapi.json', (c) => c.json(openApiSpec(context(c.env, c.req.url))));
 

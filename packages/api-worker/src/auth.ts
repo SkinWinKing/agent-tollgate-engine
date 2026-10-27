@@ -18,7 +18,9 @@ const NONCE_TTL_SEC = 300;
 
 export interface Session {
   address: string;
-  chain: 'solana' | 'evm';
+  chain: 'solana' | 'evm' | 'google';
+  email?: string;
+  name?: string;
   exp: number;
 }
 
@@ -129,11 +131,97 @@ auth.post('/auth/verify', async (c) => {
 
 auth.get('/auth/me', async (c) => {
   const s = await readSession(c);
-  return s ? c.json({ address: s.address, chain: s.chain, expires: new Date(s.exp * 1000).toISOString() }) : c.json({ error: 'NOT_SIGNED_IN' }, 401);
+  if (!s) return c.json({ error: 'NOT_SIGNED_IN' }, 401);
+  return c.json({ address: s.address, chain: s.chain, email: s.email, name: s.name, expires: new Date(s.exp * 1000).toISOString() });
 });
 
 auth.post('/auth/logout', (c) => {
   if (!sameOrigin(c)) return c.json({ error: 'FORBIDDEN' }, 403);
   deleteCookie(c, COOKIE, { path: '/', secure: true });
   return c.json({ ok: true });
+});
+
+const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
+const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
+const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo';
+
+async function ensureUsersTable(db: D1Database) {
+  await db.prepare(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    name TEXT,
+    picture TEXT,
+    wallet_sol TEXT,
+    wallet_evm TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`).run();
+}
+
+auth.get('/auth/google', async (c) => {
+  const clientId = c.env.GOOGLE_CLIENT_ID;
+  if (!clientId) return c.json({ error: 'GOOGLE_AUTH_DISABLED' }, 503);
+  const origin = new URL(c.req.url).origin;
+  const state = hex(crypto.getRandomValues(new Uint8Array(16)));
+  await c.env.CACHE.put(`auth:gstate:${state}`, '1', { expirationTtl: NONCE_TTL_SEC });
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: `${origin}/auth/google/callback`,
+    response_type: 'code',
+    scope: 'openid email profile',
+    state,
+    prompt: 'select_account',
+  });
+  return c.redirect(`${GOOGLE_AUTH_URL}?${params}`);
+});
+
+auth.get('/auth/google/callback', async (c) => {
+  const clientId = c.env.GOOGLE_CLIENT_ID;
+  const clientSecret = c.env.GOOGLE_CLIENT_SECRET;
+  const sessionSecret = c.env.SESSION_SECRET;
+  if (!clientId || !clientSecret || !sessionSecret) return c.json({ error: 'AUTH_DISABLED' }, 503);
+
+  const code = c.req.query('code');
+  const state = c.req.query('state');
+  const error = c.req.query('error');
+  if (error) return c.redirect('/#home');
+  if (!code || !state) return c.json({ error: 'INVALID_CALLBACK' }, 400);
+
+  const stored = await c.env.CACHE.get(`auth:gstate:${state}`);
+  if (!stored) return c.json({ error: 'STATE_EXPIRED' }, 400);
+  await c.env.CACHE.delete(`auth:gstate:${state}`);
+
+  const origin = new URL(c.req.url).origin;
+  const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: `${origin}/auth/google/callback`,
+      grant_type: 'authorization_code',
+    }),
+  });
+  const tokens = await tokenRes.json<{ access_token?: string; error?: string }>();
+  if (!tokens.access_token) return c.json({ error: 'TOKEN_EXCHANGE_FAILED', detail: tokens.error }, 400);
+
+  const userRes = await fetch(GOOGLE_USERINFO_URL, { headers: { authorization: `Bearer ${tokens.access_token}` } });
+  const user = await userRes.json<{ email?: string; name?: string; picture?: string }>();
+  if (!user.email) return c.json({ error: 'NO_EMAIL' }, 400);
+
+  await ensureUsersTable(c.env.SALES);
+  const existing = await c.env.SALES.prepare('SELECT wallet_sol, wallet_evm FROM users WHERE email = ?').bind(user.email).first<{ wallet_sol: string | null; wallet_evm: string | null }>();
+  if (existing) {
+    await c.env.SALES.prepare('UPDATE users SET name = ?, picture = ?, updated_at = datetime(\'now\') WHERE email = ?').bind(user.name ?? '', user.picture ?? '', user.email).run();
+  } else {
+    await c.env.SALES.prepare('INSERT INTO users (email, name, picture) VALUES (?, ?, ?)').bind(user.email, user.name ?? '', user.picture ?? '').run();
+  }
+
+  const walletAddr = existing?.wallet_sol || existing?.wallet_evm || '';
+  const chain: Session['chain'] = existing?.wallet_sol ? 'solana' : existing?.wallet_evm ? 'evm' : 'google';
+  const session: Session = { address: walletAddr, chain, email: user.email, name: user.name, exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SEC };
+  const payload = b64url(te.encode(JSON.stringify(session)));
+  setCookie(c, COOKIE, `${payload}.${await hmac(sessionSecret, payload)}`, { httpOnly: true, secure: true, sameSite: 'Lax', path: '/', maxAge: SESSION_TTL_SEC });
+  return c.redirect('/#home');
 });
