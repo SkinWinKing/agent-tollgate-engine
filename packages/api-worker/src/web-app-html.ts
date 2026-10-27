@@ -11,7 +11,7 @@ export const APP_HTML = `<!doctype html>
 <style>
 :root{--bg:#0b1220;--panel:#111a2e;--line:#1f2a44;--text:#e6edf7;--muted:#8da2c0;--acc:#4ade80;--warn:#fbbf24;--bad:#f87171;--blue:#60a5fa}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,rgba(74,222,128,.12),transparent 60%),radial-gradient(900px 500px at -10% 20%,rgba(96,165,250,.12),transparent 60%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
-#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.55}header,main{position:relative;z-index:1}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.9}header,main{position:relative;z-index:1}
 .hero{padding:42px 0 18px;text-align:center}.hero h1{font-size:clamp(28px,5vw,52px);line-height:1.05;margin:0 0 12px;letter-spacing:-.02em;background:linear-gradient(90deg,#e6edf7,#4ade80 45%,#60a5fa);-webkit-background-clip:text;background-clip:text;color:transparent}
 .hero p{color:var(--muted);max-width:640px;margin:0 auto 18px;font-size:16px}.cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .card{backdrop-filter:blur(10px);background:linear-gradient(180deg,rgba(17,26,46,.85),rgba(17,26,46,.6))!important;box-shadow:0 0 0 1px rgba(74,222,128,.06),0 10px 30px rgba(0,0,0,.25);transition:transform .2s,box-shadow .2s}.card:hover{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(74,222,128,.25),0 14px 36px rgba(0,0,0,.35)}
@@ -121,7 +121,7 @@ async function loadStats(){try{const s=await (await fetch('/app/stats')).json();
 (function waves(){const c=$('#bg'),x=c.getContext('2d');let w,h,t=0;const fit=()=>{w=c.width=innerWidth*devicePixelRatio;h=c.height=innerHeight*devicePixelRatio};fit();addEventListener('resize',fit);
  const cols=['74,222,128','96,165,250','167,139,250','45,212,191'];
  if(matchMedia('(prefers-reduced-motion: reduce)').matches){return}
- (function frame(){x.clearRect(0,0,w,h);t+=0.006+energy*0.012;for(let k=0;k<4;k++){x.beginPath();const amp=h*(0.05+energy*0.09)*(1-k*0.18),f=0.0018+k*0.0009,y0=h*(0.55+k*0.07);
+ (function frame(){x.clearRect(0,0,w,h);t+=0.006+energy*0.012;for(let k=0;k<4;k++){x.beginPath();const amp=h*(0.06+energy*0.10)*(1-k*0.15),f=0.0018+k*0.0009,y0=h*(0.30+k*0.05);
   for(let i=0;i<=w;i+=6){const y=y0+Math.sin(i*f+t*(1.4+k*0.35))*amp+Math.sin(i*f*2.7-t*2.1)*amp*0.32;i?x.lineTo(i,y):x.moveTo(i,y)}
   x.strokeStyle='rgba('+cols[k]+','+(0.55-k*0.1)+')';x.lineWidth=(2.2-k*0.35)*devicePixelRatio;x.shadowColor='rgba('+cols[k]+',.8)';x.shadowBlur=14*devicePixelRatio;x.stroke()}requestAnimationFrame(frame)})()})();
 async function loadMarket(){try{const m=await (await fetch('/app/market')).json();const cards=(m.prices||[]).map(p=>'<div class="card"><div class="k">'+p.symbol.replace('USDT','')+'</div><div class="v">$'+fmt(p.price)+'</div><div class="'+(p.change24hPct>=0?'ok':'bad')+'">'+(p.change24hPct>=0?'+':'')+p.change24hPct+'% 24h</div></div>');
