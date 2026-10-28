@@ -125,7 +125,7 @@ discovery.get('/.well-known/mcp/server-card.json', (c) => {
     $schema: 'https://static.modelcontextprotocol.io/schemas/mcp-server-card/v1.json',
     version: '1.0',
     protocolVersion: '2025-06-18',
-    serverInfo: { name: 'com.skinwinking/agent-tollgate', title: 'Agent Tollgate', version: '1.1.0' },
+    serverInfo: { name: 'com.skinwinking/agent-tollgate', title: 'Agent Tollgate', version: '1.4.0' },
     description: `${ALL_ROUTES.length} x402 pay-per-call tools: crypto data, token audits, swaps, web/DNS checks, threat intel, AI text and images.`,
     documentationUrl: `${o}/llms.txt`,
     transport: { type: 'streamable-http', endpoint: `${o}/mcp` },

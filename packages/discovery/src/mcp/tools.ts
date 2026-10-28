@@ -46,6 +46,30 @@ export const TOOLS: ToolDef[] = [
     inputSchema: withProof(ROUTES.quote),
     route: ROUTES.quote,
   },
+  {
+    name: 'earn_vaults',
+    description: `${ROUTES.earnVaults.description} ${unitsToUsdc(ROUTES.earnVaults.priceUnits ?? 0)} USDC per call via x402.`,
+    inputSchema: withProof(ROUTES.earnVaults),
+    route: ROUTES.earnVaults,
+  },
+  {
+    name: 'earn_deposit',
+    description: `${ROUTES.earnDeposit.description} ${unitsToUsdc(ROUTES.earnDeposit.priceUnits ?? 0)} USDC per call via x402.`,
+    inputSchema: withProof(ROUTES.earnDeposit),
+    route: ROUTES.earnDeposit,
+  },
+  {
+    name: 'gmgn_trending',
+    description: `${ROUTES.trendingTokens.description} ${unitsToUsdc(ROUTES.trendingTokens.priceUnits ?? 0)} USDC per call via x402.`,
+    inputSchema: withProof(ROUTES.trendingTokens),
+    route: ROUTES.trendingTokens,
+  },
+  {
+    name: 'gmgn_gas_price',
+    description: `${ROUTES.gasPrice.description} ${unitsToUsdc(ROUTES.gasPrice.priceUnits ?? 0)} USDC per call via x402.`,
+    inputSchema: withProof(ROUTES.gasPrice),
+    route: ROUTES.gasPrice,
+  },
   ...[...DATA_ROUTES, ...UTIL_ROUTES, ...BATCH2_ROUTES].map((route) => ({
     name: route.id,
     description: `${route.description} ${unitsToUsdc(route.priceUnits ?? 0)} USDC per call via x402.`,
