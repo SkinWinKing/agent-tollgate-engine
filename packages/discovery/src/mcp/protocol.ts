@@ -44,7 +44,7 @@ export async function handleRpc(msg: RpcRequest, dispatch: Dispatch): Promise<Rp
       return ok({
         protocolVersion: PROTOCOL_VERSION,
         capabilities: { tools: { listChanged: false }, prompts: { listChanged: false }, resources: { listChanged: false } },
-        serverInfo: { name: 'agent-tollgate-engine', title: 'Agent Tollgate', version: '1.3.0' },
+        serverInfo: { name: 'agent-tollgate-engine', title: 'Agent Tollgate', version: '1.4.0' },
         instructions: `${ALL_ROUTES.length} pay-per-call tools (x402, USDC). Call plan_task (free) with your goal to get the right workflow, use prompts/get for multi-step workflows, then call tools; paid tools answer with payment instructions first.`,
       });
     case 'ping':
