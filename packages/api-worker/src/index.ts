@@ -1,4 +1,5 @@
 import { ALL_ROUTES, loadConfig, unitsToUsdc } from '@tollgate/core';
+import { resolveOutcome } from './analytics';
 import { handleRpc, llmsTxt, openApiSpec, type DiscoveryContext } from '@tollgate/discovery';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -65,7 +66,8 @@ app.use('/api/v1/*', async (c, next) => {
   const started = Date.now();
   await next();
   const status = c.res.status;
-  const outcome = status === 402 ? 'payment_required' : status < 300 ? 'paid' : status === 429 ? 'rate_limited' : status < 500 ? 'client_error' : 'server_error';
+  const payment = c.get('payment');
+  const outcome = resolveOutcome(status, payment, !!apiKeyFrom(c.req.raw.headers));
   const ua = (c.req.header('user-agent') ?? 'none').split(/[\s/;(]/)[0]!.slice(0, 40);
   const source = (c.req.header('x-tollgate-source') ?? 'http').replace(/[^\w.-]/g, '').slice(0, 32) || 'http';
   const tool = ROUTE_BY_PATH.get(c.req.path);
