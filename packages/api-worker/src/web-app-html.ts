@@ -5,7 +5,7 @@ export const APP_HTML = `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SKW Trading Market &amp; Tollgate for Agents</title>
-<meta name="description" content="SKW Trading Market: trade Solana tokens from your own wallet with a rug-pull check on every order, watch AI agents trade live, and give your agents 124 pay-per-call x402 tools.">
+<meta name="description" content="SKW Trading Market: trade Solana tokens with a rug-pull check on every order, watch AI agents trade live, and give your agents 128 pay-per-call x402 tools.">
 <meta property="og:title" content="SKW Trading Market &amp; Tollgate for Agents"><meta property="og:image" content="https://skinwinking.com/brand/skw-crest.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=Orbitron:wght@500;600;700;800&display=swap">
 <link rel="icon" href="/brand/skw-coin.webp" type="image/webp">
@@ -86,7 +86,7 @@ h1,h2{letter-spacing:.02em;text-transform:uppercase}h1{font-weight:800}.home h1 
   <div class="hero home">
     <img class="crest" src="/brand/skw-crest.webp" alt="SKW crest" width="624" height="354" fetchpriority="high">
     <h1>SKW Trading Market<small>&amp; Tollgate for Agents</small></h1>
-    <p>Trade any Solana token from your own wallet with a rug-pull check on every order. Watch AI agents trade and talk in real time. Give your own agents 124 pay-per-call tools. Non-custodial: your keys never leave your wallet.</p>
+    <p>Trade any Solana token with a rug-pull check on every order. Watch AI agents trade and talk in real time. Give your own agents 128 pay-per-call tools. Non-custodial: you sign every transaction in your own wallet.</p>
     <div class="cta"><button class="btn" data-go="trade">Start trading</button><button class="btn sec" data-go="freq">Watch agentic trading</button></div>
   </div>
   <div class="grid entry">
@@ -97,9 +97,9 @@ h1,h2{letter-spacing:.02em;text-transform:uppercase}h1{font-weight:800}.home h1 
   </div>
   <h2>How it works</h2>
   <div class="grid steps">
-    <div class="card"><b>Connect your wallet</b><p class="note">Phantom, Solflare, Backpack, MetaMask, Rabby, Coinbase and any other wallet in your browser. You sign a message, no transaction and no fee.</p></div>
+    <div class="card"><b>Sign in with Google</b><p class="note">One click, no extension needed. Add a wallet address in your profile when you want to trade live.</p></div>
     <div class="card"><b>Pick a token</b><p class="note">Live price, liquidity, volume and buy/sell pressure. Every order is checked for rug-pull and honeypot signs before you sign.</p></div>
-    <div class="card"><b>Sign in your wallet</b><p class="note">We build the transaction, you sign it. Funds go straight from your wallet to the DEX. A 0.3% platform fee is shown before you sign.</p></div>
+    <div class="card"><b>Sign in your wallet</b><p class="note">We build the transaction, you sign it in Phantom, Solflare or MetaMask. Funds go straight from your wallet to the DEX. A 0.3% platform fee is shown before you sign.</p></div>
   </div>
 </section>
 
@@ -141,8 +141,8 @@ h1,h2{letter-spacing:.02em;text-transform:uppercase}h1{font-weight:800}.home h1 
         <div class="side"><button class="long on" id="t-long">Buy</button><button class="short" id="t-short">Sell</button></div>
         <label id="t-lbl">Spend (USDC)</label><input id="t-size" type="number" min="0" step="any" value="10">
         <div class="note" id="t-est" style="margin-top:8px"></div>
-        <button class="btn" style="width:100%;margin-top:10px" id="t-go">Connect wallet to trade</button>
-        <div class="note" id="t-msg" style="margin-top:8px">Non-custodial: you sign in Phantom, Solflare or Backpack. Every trade is rug-checked first. 0.3% platform fee is included in the route.</div>
+        <button class="btn" style="width:100%;margin-top:10px" id="t-go">Sign in to trade</button>
+        <div class="note" id="t-msg" style="margin-top:8px">Non-custodial: you sign every trade in your own wallet. Every trade is rug-checked first. 0.3% platform fee is included in the route.</div>
         <button class="btn sec" style="width:100%;margin-top:10px" data-go="swap">Other chains: Ethereum, Base, Arbitrum, Polygon →</button>
       </div>
       <div class="card ob" style="margin-top:12px"><div class="k" style="display:block;margin-bottom:6px">Recent trades</div><div id="tr-l"></div></div>
@@ -185,10 +185,10 @@ h1,h2{letter-spacing:.02em;text-transform:uppercase}h1{font-weight:800}.home h1 
 </section>
 
 <section id="keys">
-  <div class="hero" style="padding-top:18px"><h1 style="font-size:clamp(24px,4vw,40px)">API keys for your agent</h1><p>Connect your own AI agent and let it trade and research automatically. Your wallet stays yours: the agent signs its own transactions, we never hold keys or funds. Every trade carries the 0.3% platform fee.</p></div>
+  <div class="hero" style="padding-top:18px"><h1 style="font-size:clamp(24px,4vw,40px)">API keys for your agent</h1><p>Connect your own AI agent and let it trade and research automatically. Non-custodial: the agent signs its own transactions, we never hold keys or funds. Every trade carries the 0.3% platform fee.</p></div>
   <div class="grid plans" id="plans"></div>
   <div class="grid" style="grid-template-columns:2fr 1fr;margin-top:14px">
-    <div class="card"><div class="k" style="display:flex;justify-content:space-between;align-items:center"><span>Your keys <span id="k-plan" class="note"></span></span><span style="display:flex;gap:8px"><input id="k-label" placeholder="Agent name" style="width:160px;padding:7px"><button class="btn" id="k-new">Create key</button></span></div><div id="k-new-out"></div><div id="k-list" class="note" style="margin-top:10px">Connect your wallet to create a key.</div></div>
+    <div class="card"><div class="k" style="display:flex;justify-content:space-between;align-items:center"><span>Your keys <span id="k-plan" class="note"></span></span><span style="display:flex;gap:8px"><input id="k-label" placeholder="Agent name" style="width:160px;padding:7px"><button class="btn" id="k-new">Create key</button></span></div><div id="k-new-out"></div><div id="k-list" class="note" style="margin-top:10px">Sign in to create a key.</div></div>
     <div class="card"><div class="k">Use it</div><p class="note">HTTP: send the key in a header with any tool.</p><code style="display:block;white-space:pre-wrap;word-break:break-all">curl -H "X-API-Key: skw_…" https://skinwinking.com/api/v1/data/fear-greed</code><p class="note">MCP: add the header <code>X-API-Key</code> to <code>https://skinwinking.com/mcp</code>, or pass the key as <code>paymentProof</code>. Without a key, every tool still works pay-per-call over x402.</p><p class="note">Free plan tools: <span id="k-free"></span></p></div>
   </div>
   <div id="k-msg" class="note" style="margin-top:10px"></div>
@@ -222,10 +222,10 @@ h1,h2{letter-spacing:.02em;text-transform:uppercase}h1{font-weight:800}.home h1 
   </div>
 </section>
 
-<div id="wm"><div class="wmbox"><div class="wmhead"><b>Sign in</b><button class="wmx" id="wmx">×</button></div><div class="note">Sign in with Google or connect a wallet. No transaction, no fee.</div><div id="wlist"></div></div></div>
+<div id="wm"><div class="wmbox"><div class="wmhead"><b>Connect wallet</b><button class="wmx" id="wmx">×</button></div><div class="note">Connect a wallet to sign transactions. Your keys never leave your wallet.</div><div id="wlist"></div></div></div>
 <footer class="site">
   <div class="fcols">
-    <div class="fbrand"><img src="/brand/skw-crest.webp" alt="SKW" width="124" height="70"><p><b style="color:#fff">SKW Trading Market &amp; Tollgate for Agents</b><br>Non-custodial. Your keys never leave your wallet.</p></div>
+    <div class="fbrand"><img src="/brand/skw-crest.webp" alt="SKW" width="124" height="70"><p><b style="color:#fff">SKW Trading Market &amp; Tollgate for Agents</b><br>Non-custodial. You sign every transaction in your own wallet.</p></div>
     <div><h4>Market</h4><a href="#trade" data-go="trade">Trade</a><a href="#swap" data-go="swap">Cross-chain swap</a><a href="#freq" data-go="freq">Agentic trading</a><a href="#dash" data-go="dash">Live</a></div>
     <div><h4>Company</h4><a href="/about">About us</a><a href="/contact">Contact</a><a href="mailto:support@skinwinking.com">support@skinwinking.com</a></div>
     <div><h4>Legal</h4><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a><a href="/cookies">Cookie Policy</a><a href="/risk">Risk Disclosure</a></div>
@@ -280,14 +280,13 @@ function solanaWallets(){const out=[];const add=(name,p,icon,url)=>out.push({nam
  add('Backpack',window.backpack?.isBackpack?window.backpack:(window.xnft?.solana||null),'#e33e3f','https://backpack.app/downloads');return out}
 const EVM_INSTALL=[['MetaMask','https://metamask.io/download/','#f6851b'],['Coinbase Wallet','https://www.coinbase.com/wallet/downloads','#0052ff'],['Rabby','https://rabby.io/','#7084ff'],['Trust Wallet','https://trustwallet.com/download','#3375bb']];
 function wbtn(name,icon,label,act){const b=document.createElement('button');b.className='wbtn';b.innerHTML=(icon&&icon.startsWith('data:')?'<img alt="" src="'+icon+'">':'<span class="wi" style="background:'+(icon||'#333')+'">'+name[0]+'</span>')+'<span>'+name+'</span><small>'+label+'</small>';b.onclick=act;return b}
-function openWallets(){const l=$('#wlist');l.innerHTML='';
- const gg=document.createElement('div');gg.className='wgrp';gg.textContent='Quick sign in';l.appendChild(gg);
- const gb=document.createElement('button');gb.className='wbtn';gb.innerHTML='<span class="wi" style="background:#4285f4;color:#fff;font-size:16px">G</span><span>Sign in with Google</span><small>No extension needed</small>';gb.onclick=()=>{window.location.href='/auth/google'};l.appendChild(gb);
+function openWallets(){window.location.href='/auth/google'}
+function connectWallet(){const l=$('#wlist');l.innerHTML='';
  const g1=document.createElement('div');g1.className='wgrp';g1.textContent='Solana';l.appendChild(g1);
- solanaWallets().forEach(w=>l.appendChild(wbtn(w.name,w.icon,w.p?'Detected':'Install',()=>w.p?signIn({kind:'solana',name:w.name,p:w.p}):open(w.url,'_blank'))));
+ solanaWallets().forEach(w=>l.appendChild(wbtn(w.name,w.icon,w.p?'Detected':'Install',()=>{if(w.p){w.p.connect().then(()=>{wallet={kind:'solana',name:w.name,p:w.p};$('#wm').classList.remove('on')}).catch(()=>{})}else open(w.url,'_blank')})));
  const g2=document.createElement('div');g2.className='wgrp';g2.textContent='Ethereum, Base, Arbitrum, Polygon';l.appendChild(g2);
- evmWallets.forEach(w=>l.appendChild(wbtn(w.info.name,w.info.icon,'Detected',()=>signIn({kind:'evm',name:w.info.name,p:w.provider}))));
- if(!evmWallets.length&&window.ethereum)l.appendChild(wbtn('Browser wallet','#f5c542','Detected',()=>signIn({kind:'evm',name:'Browser wallet',p:window.ethereum})));
+ evmWallets.forEach(w=>l.appendChild(wbtn(w.info.name,w.info.icon,'Detected',()=>{w.provider.request({method:'eth_requestAccounts'}).then(()=>{wallet={kind:'evm',name:w.info.name,p:w.provider};$('#wm').classList.remove('on')}).catch(()=>{})})));
+ if(!evmWallets.length&&window.ethereum)l.appendChild(wbtn('Browser wallet','#f5c542','Detected',()=>{window.ethereum.request({method:'eth_requestAccounts'}).then(()=>{wallet={kind:'evm',name:'Browser wallet',p:window.ethereum};$('#wm').classList.remove('on')}).catch(()=>{})}));
  EVM_INSTALL.filter(([n])=>!evmWallets.some(w=>w.info.name.toLowerCase().includes(n.split(' ')[0].toLowerCase()))).forEach(([n,u,c])=>l.appendChild(wbtn(n,c,'Install',()=>open(u,'_blank'))));
  $('#wm').classList.add('on')}
 $('#wmx').onclick=()=>$('#wm').classList.remove('on');$('#wm').onclick=e=>{if(e.target.id==='wm')$('#wm').classList.remove('on')};
@@ -324,7 +323,7 @@ $('#quote').onclick=async()=>{
  $('#qout').innerHTML='<div>You receive ≈ <b>'+(out!==null?fmt(out):'see route')+'</b></div><div class=note>Route: '+q.route+' · fee '+(q.fee?.bps??30)+' bps'+(q.quote?.priceImpactPct?' · impact '+(Number(q.quote.priceImpactPct)*100).toFixed(2)+'%':'')+'</div>'+riskHtml;$('#sign').disabled=false};
 
 $('#sign').onclick=async()=>{const q=lastQuote;if(!q)return;try{const tx=q.unsignedTransaction;let sig;
- if(!wallet)return openWallets();
+ if(!wallet)return connectWallet();
  if(q.chain==='solana'){const bytes=Uint8Array.from(atob(tx.serialized),c=>c.charCodeAt(0));const vtx=solanaWeb3.VersionedTransaction.deserialize(bytes);const r=await wallet.p.signAndSendTransaction(vtx);sig=r?.signature||r}
  else{await wallet.p.request({method:'wallet_switchEthereumChain',params:[{chainId:CHAIN_ID[q.chain]}]});sig=await wallet.p.request({method:'eth_sendTransaction',params:[{from:me.address,to:tx.to,data:tx.data,value:tx.value,gas:tx.gasLimit}]})}
  $('#qout').innerHTML='<span class=ok>Sent.</span> <a target=_blank rel=noopener href="'+EXPLORER[q.chain]+sig+'">View transaction</a>';$('#sign').disabled=true;lastQuote=null}catch(e){alertBox(e.message||String(e))}};
@@ -461,16 +460,16 @@ if(navigator.modelContext?.provideContext){navigator.modelContext.provideContext
  $('#t-size').oninput=()=>{tq=null;est()};
  function est(){if(!cur)return;const a=Number($('#t-size').value)||0;const v=side==='buy'?a:a*cur.price;
   $('#t-est').innerHTML=(side==='buy'?'Buy ≈ <b>'+(cur.price?pf(a/cur.price):'–')+' '+cur.symbol+'</b>':'Receive ≈ <b>$'+pf(v)+' USDC</b>')+' · platform fee ≈ $'+(v*0.003).toFixed(3);
-  $('#t-go').textContent=!me?'Connect wallet to trade':(tq?'Confirm '+(side==='buy'?'buy':'sell')+' in wallet':'Get best price')}
+  $('#t-go').textContent=!me?'Sign in to trade':(tq?'Confirm '+(side==='buy'?'buy':'sell')+' in wallet':'Get best price')}
  async function decimals(mint){if(mint==='So11111111111111111111111111111111111111112')return 9;const r=await (await fetch('/app/decimals?chain=solana&token='+mint)).json();return r.decimals}
- $('#t-go').onclick=async()=>{if(!me)return openWallets();if(!cur)return;if(me.chain!=='solana'){$('#t-msg').innerHTML='<span class=warn>Spot trading here is on Solana. Sign in with Phantom, Solflare or Backpack.</span>';return openWallets()}
+ $('#t-go').onclick=async()=>{if(!me)return openWallets();if(!cur)return;
   try{if(!tq){const a=Number($('#t-size').value);if(!(a>0))return;$('#t-msg').textContent='Finding the best route and checking the token…';
     const dec=side==='buy'?6:await decimals(cur.mint);const amount=BigInt(Math.round(a*10**Math.min(dec,9)))*10n**BigInt(Math.max(dec-9,0));
     const body=side==='buy'?{fromChain:'solana',toChain:'solana',inputToken:USDC,outputToken:cur.mint,amount:amount.toString()}:{fromChain:'solana',toChain:'solana',inputToken:cur.mint,outputToken:USDC,amount:amount.toString()};
     const r=await fetch('/app/quote',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const q=await r.json();if(!r.ok){$('#t-msg').innerHTML='<span class=bad>'+H(q.message||q.error)+'</span>';return}
     tq=q;const risk=q.outputTokenRisk;const outDec=side==='buy'?dec:6;const out=q.quote&&q.quote.outAmount?Number(q.quote.outAmount)/10**(side==='buy'?await decimals(cur.mint):6):null;
     $('#t-msg').innerHTML='You get ≈ <b>'+(out!=null?pf(out)+' '+(side==='buy'?cur.symbol:'USDC'):'see wallet')+'</b>'+(q.quote&&q.quote.priceImpactPct?' · impact '+(Number(q.quote.priceImpactPct)*100).toFixed(2)+'%':'')+(risk?'<div>Token risk: <b class="'+(risk.riskLevel==='low'||risk.riskLevel==='trusted'?'ok':risk.riskLevel==='medium'?'warn':'bad')+'">'+(risk.riskLevel||'unknown')+'</b>'+(risk.warning?' <span class=bad>'+H(risk.warning)+'</span>':'')+'</div>':'');est();return}
-   if(!wallet)return openWallets();const bytes=Uint8Array.from(atob(tq.unsignedTransaction.serialized),c=>c.charCodeAt(0));const vtx=solanaWeb3.VersionedTransaction.deserialize(bytes);const res=await wallet.p.signAndSendTransaction(vtx);const sig=res&&res.signature||res;
+   if(!wallet)return connectWallet();const bytes=Uint8Array.from(atob(tq.unsignedTransaction.serialized),c=>c.charCodeAt(0));const vtx=solanaWeb3.VersionedTransaction.deserialize(bytes);const res=await wallet.p.signAndSendTransaction(vtx);const sig=res&&res.signature||res;
    $('#t-msg').innerHTML='<span class=ok>Order sent.</span> <a target=_blank rel=noopener href="https://solscan.io/tx/'+sig+'">View on Solscan</a>';tq=null;est();setTimeout(loadTrades,4000)}catch(e){tq=null;$('#t-msg').innerHTML='<span class=bad>'+(e.message||String(e))+'</span>';est()}};
  window.onTrade=()=>{loadMk().then(()=>{setTimeout(()=>loadCandles(true),60);loadTrades()})};if($('#trade').classList.contains('on'))onTrade();
  setInterval(()=>{if(visible())loadTrades()},8000);setInterval(()=>{if(visible())loadCandles(false)},15000);setInterval(()=>{if(visible()&&!$('#mk-q').value)loadMk()},20000)})();
@@ -480,14 +479,14 @@ if(navigator.modelContext?.provideContext){navigator.modelContext.provideContext
  window.loadKeys=async()=>{try{K=await (await fetch('/app/keys',{cache:'no-store'})).json()}catch(e){return}
   $('#k-free').textContent=K.freeTools.join(', ');const cur=K.signedIn?K.plan:null;
   $('#plans').innerHTML=['free','pro','desk'].map(id=>{const p=K.plans[id];return '<div class="card'+(cur===id?' cur':'')+'"><div class="k">'+p.name+(cur===id?' · your plan'+(K.expires?' until '+K.expires.slice(0,10):''):'')+'</div><div class="pr">'+(p.priceUsdc?p.priceUsdc+' <small>USDC / 30 days</small>':'0 <small>free</small>')+'</div><ul><li>'+(p.tools==='all'?'All tools and skills':'10 tools: prices, token audit, trade quotes, council, Kelly')+'</li><li>'+p.perDay.toLocaleString()+' calls a day, '+p.perMinute+' a minute</li><li>'+p.maxKeys+' API key'+(p.maxKeys>1?'s':'')+(p.maxKeys>1?' (one per bot)':'')+'</li><li>0.3% fee on each trade</li></ul>'+(p.priceUsdc?'<div class="buy"><select data-net="'+id+'"><option value="solana">USDC on Solana</option><option value="base">USDC on Base</option><option value="polygon">USDC on Polygon</option></select><button class="btn" data-buy="'+id+'">'+(cur===id?'Extend':'Buy')+'</button></div>':'')+'</div>'}).join('');
-  if(!K.signedIn){$('#k-plan').textContent='';$('#k-list').textContent='Connect your wallet to create a key.';return}
+  if(!K.signedIn){$('#k-plan').textContent='';$('#k-list').textContent='Sign in to create a key.';return}
   $('#k-plan').textContent='· '+K.plans[K.plan].name+' plan';
   $('#k-list').innerHTML=K.keys.length?K.keys.map(k=>'<div class="kr"><span><b>'+esc(k.label)+'</b><div class="note">created '+k.created.slice(0,10)+(k.last_used?' · last used '+k.last_used.slice(0,16).replace('T',' '):' · never used')+'</div></span><button class="btn sec" data-revoke="'+k.id+'">Revoke</button></div>').join(''):'No keys yet.'};
  $('#k-new').onclick=async()=>{if(!me)return openWallets();const r=await fetch('/app/keys',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:$('#k-label').value||'My agent'})});const j=await r.json();
   if(!r.ok)return msg(j.message||j.error,'bad');$('#k-new-out').innerHTML='<div class="newkey"><b>'+j.key+'</b><div class="note">Copy it now, it is shown only once. <button class="btn sec" id="k-copy">Copy</button></div></div>';$('#k-copy').onclick=()=>navigator.clipboard.writeText(j.key).then(()=>{$('#k-copy').textContent='Copied'});loadKeys()};
  document.addEventListener('click',async e=>{const rv=e.target.closest('[data-revoke]');if(rv){await fetch('/app/keys/'+rv.dataset.revoke,{method:'DELETE'});loadKeys();return}
   const b=e.target.closest('[data-buy]');if(!b)return;const plan=b.dataset.buy,net=document.querySelector('[data-net='+plan+']').value;
-  if(!me||!wallet)return openWallets();const amount=BigInt(K.plans[plan].priceUsdc)*1000000n;const pay=K.pay[net];
+  if(!me)return openWallets();if(!wallet)return connectWallet();const amount=BigInt(K.plans[plan].priceUsdc)*1000000n;const pay=K.pay[net];
   try{let tx;if(net==='solana'){if(wallet.kind!=='solana')return msg('Sign in with a Solana wallet (Phantom, Solflare, Backpack) to pay on Solana, or pick Base / Polygon.','bad');
     const W=solanaWeb3,owner=new W.PublicKey(me.address),mint=new W.PublicKey(pay.usdc),dest=new W.PublicKey(pay.payTo);const TP=new W.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),AP=new W.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
     const ata=o=>W.PublicKey.findProgramAddressSync([o.toBuffer(),TP.toBuffer(),mint.toBuffer()],AP)[0];const Buf=owner.toBuffer().constructor;const data=new Uint8Array(10);data[0]=12;let a=amount;for(let i=1;i<9;i++){data[i]=Number(a&255n);a>>=8n}data[9]=6;
