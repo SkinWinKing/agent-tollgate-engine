@@ -50,8 +50,14 @@ export async function quoteLifi(cfg: RouterConfig, r: QuoteRequest): Promise<Quo
   const headers: Record<string, string> = { accept: 'application/json' };
   if (cfg.lifiApiKey) headers['x-lifi-api-key'] = cfg.lifiApiKey;
 
-  const res = await fetch(`${cfg.lifiApiUrl}/quote?${params}`, { headers, signal: AbortSignal.timeout(20000) });
-  const text = await res.text();
+  let res!: Response;
+  let text!: string;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    res = await fetch(`${cfg.lifiApiUrl}/quote?${params}`, { headers, signal: AbortSignal.timeout(20000) });
+    text = await res.text();
+    if (res.ok || res.status < 500) break;
+    if (attempt < 2) await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+  }
   if (!res.ok) throw new RouterError('NO_ROUTE', `LI.FI ${res.status}: ${text.slice(0, 300)}`, res.status === 404 ? 404 : 502);
   const quote = JSON.parse(text) as LifiQuote;
   if (!quote.transactionRequest?.data) throw new RouterError('NO_ROUTE', 'LI.FI returned no transaction', 502);

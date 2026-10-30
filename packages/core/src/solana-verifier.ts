@@ -40,6 +40,7 @@ export async function verifySolanaPayment(cfg: CoreConfig, signature: string, mi
   if (!settledAt || Date.now() / 1000 - settledAt > cfg.maxAgeSec) {
     return { ok: false, reason: 'PAYMENT_TOO_OLD', retryable: false };
   }
+  if (received > BigInt(Number.MAX_SAFE_INTEGER)) return { ok: false, reason: 'AMOUNT_OVERFLOW', retryable: false };
   const payer = tx.transaction.message.accountKeys.find((k) => k.signer)?.pubkey ?? null;
   return { ok: true, payment: { network: 'solana', reference: signature, payer, amountUnits: Number(received), settledAt } };
 }

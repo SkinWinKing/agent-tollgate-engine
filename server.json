@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "com.skinwinking/agent-tollgate",
   "title": "Agent Tollgate",
-  "description": "128 x402 tools for agents: crypto, council, audits, swaps, finance, web, docs, AI.",
-  "version": "1.4.0",
+  "description": "128 x402 pay-per-call tools. Crypto, swaps, web, AI. Pay USDC per request.",
+  "version": "1.4.1",
   "repository": {
     "url": "https://github.com/SkinWinKing/agent-tollgate-engine",
     "source": "github"

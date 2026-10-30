@@ -143,7 +143,7 @@ auth.post('/auth/verify', async (c) => {
     }
   } catch {
     ok = false;
-    chain = 'solana';
+    chain ??= 'solana';
   }
   if (!ok) return c.json({ error: 'BAD_SIGNATURE' }, 401);
 

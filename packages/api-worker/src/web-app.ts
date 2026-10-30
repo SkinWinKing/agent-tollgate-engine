@@ -27,7 +27,7 @@ export const serveApp = (c: { body: (b: string, s: 200, h: Record<string, string
     'content-type': 'text/html; charset=utf-8',
     'cache-control': 'public, max-age=300',
     'content-security-policy':
-      "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.mainnet-beta.solana.com; frame-ancestors 'none'; base-uri 'none'",
+      "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.mainnet-beta.solana.com; frame-src https://dexscreener.com; frame-ancestors 'none'; base-uri 'none'",
     'x-frame-options': 'DENY',
     'referrer-policy': 'strict-origin-when-cross-origin',
   });
@@ -123,6 +123,89 @@ webApp.get('/app/catalog', (c) =>
     { 'cache-control': 'public, max-age=300' },
   ),
 );
+
+// GMGN proxy — free for the web UI, no x402. Stale-while-revalidate: store 1h in KV, refresh every 5min, serve stale on 429.
+const GMGN_FRESH = 300;
+const GMGN_STORE = 3600;
+
+async function gmgnCached(cache: KVNamespace, key: string, fetcher: () => Promise<unknown>, ctx: { waitUntil: (p: Promise<unknown>) => void }) {
+  const raw = await cache.get(key, 'text');
+  let stale: { t: number; d: unknown } | null = null;
+  if (raw) {
+    try { stale = JSON.parse(raw); } catch { /* corrupt */ }
+    if (stale && Date.now() - stale.t < GMGN_FRESH * 1000) return stale.d;
+  }
+  try {
+    const fresh = await fetcher();
+    ctx.waitUntil(cache.put(key, JSON.stringify({ t: Date.now(), d: fresh }), { expirationTtl: GMGN_STORE }));
+    return fresh;
+  } catch {
+    if (stale) return stale.d;
+    throw new Error('GMGN unavailable');
+  }
+}
+
+webApp.get('/app/gmgn/trending', async (c) => {
+  if (await ipLimited(c, 'gmgn-trending', 30)) return c.json({ error: 'RATE_LIMITED' }, 429);
+  const chain = c.req.query('chain') || 'sol';
+  const interval = c.req.query('interval') || '5m';
+  const limit = c.req.query('limit') || '30';
+  const filters = c.req.query('filters') || 'not_honeypot';
+  const cacheKey = `gmgn:trending:${chain}:${interval}:${limit}:${filters}`;
+  try {
+    const { trendingTokens } = await import('./services/gmgn');
+    const data = await gmgnCached(c.env.CACHE, cacheKey, () => trendingTokens(new URLSearchParams({ chain, interval, limit, filters })), c.executionCtx);
+    return c.json(data, 200, { 'cache-control': 'public, max-age=30' });
+  } catch (e) { return c.json({ error: e instanceof Error ? e.message : 'upstream' }, 502); }
+});
+
+webApp.get('/app/gmgn/gas', async (c) => {
+  if (await ipLimited(c, 'gmgn-gas', 30)) return c.json({ error: 'RATE_LIMITED' }, 429);
+  const chain = c.req.query('chain') || 'sol';
+  const cacheKey = `gmgn:gas:${chain}`;
+  try {
+    const { gasPrice } = await import('./services/gmgn');
+    const data = await gmgnCached(c.env.CACHE, cacheKey, () => gasPrice(new URLSearchParams({ chain })), c.executionCtx);
+    return c.json(data, 200, { 'cache-control': 'public, max-age=30' });
+  } catch (e) { return c.json({ error: e instanceof Error ? e.message : 'upstream' }, 502); }
+});
+
+// DEX Screener proxy — free, no rate limit concerns
+webApp.get('/app/dex/trending', async (c) => {
+  if (await ipLimited(c, 'dex-trending', 30)) return c.json({ error: 'RATE_LIMITED' }, 429);
+  const chain = c.req.query('chain') || '';
+  const cacheKey = `dex:trending:${chain}`;
+  const raw = await c.env.CACHE.get(cacheKey, 'text');
+  if (raw) { try { const e = JSON.parse(raw); if (Date.now() - e.t < 60000) return c.json(e.d, 200, { 'cache-control': 'public, max-age=15' }); } catch { /* */ } }
+  try {
+    const { trendingPairs } = await import('./services/dexscreener');
+    const data = await trendingPairs(chain || undefined);
+    c.executionCtx.waitUntil(c.env.CACHE.put(cacheKey, JSON.stringify({ t: Date.now(), d: data }), { expirationTtl: 300 }));
+    return c.json(data, 200, { 'cache-control': 'public, max-age=15' });
+  } catch (e) { return c.json({ error: e instanceof Error ? e.message : 'upstream' }, 502); }
+});
+
+webApp.get('/app/dex/search', async (c) => {
+  if (await ipLimited(c, 'dex-search', 30)) return c.json({ error: 'RATE_LIMITED' }, 429);
+  const q = c.req.query('q') || '';
+  if (!q) return c.json({ error: 'q required' }, 400);
+  try {
+    const { searchPairs } = await import('./services/dexscreener');
+    return c.json(await searchPairs(q), 200, { 'cache-control': 'public, max-age=10' });
+  } catch (e) { return c.json({ error: e instanceof Error ? e.message : 'upstream' }, 502); }
+});
+
+webApp.get('/app/dex/pair', async (c) => {
+  if (await ipLimited(c, 'dex-pair', 30)) return c.json({ error: 'RATE_LIMITED' }, 429);
+  const chain = c.req.query('chain') || '';
+  const pair = c.req.query('pair') || '';
+  if (!chain || !pair) return c.json({ error: 'chain and pair required' }, 400);
+  try {
+    const { pairDetail } = await import('./services/dexscreener');
+    const data = await pairDetail(chain, pair);
+    return data ? c.json(data, 200, { 'cache-control': 'public, max-age=15' }) : c.json({ error: 'not found' }, 404);
+  } catch (e) { return c.json({ error: e instanceof Error ? e.message : 'upstream' }, 502); }
+});
 
 webApp.get('/app/decimals', async (c) => {
   if (await ipLimited(c, 'decimals', 30)) return c.json({ error: 'RATE_LIMITED' }, 429);

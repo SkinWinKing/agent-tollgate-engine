@@ -217,7 +217,7 @@ export const ROUTES: Record<'orderbook' | 'tokenAudit' | 'quote' | 'earnVaults' 
     },
   },
   trendingTokens: {
-    id: 'gmgn_trending',
+    id: 'sniper_trending',
     method: 'GET',
     path: '/api/v1/sniper/trending',
     priceUnits: usdcToUnits(0.05),
@@ -258,7 +258,7 @@ export const ROUTES: Record<'orderbook' | 'tokenAudit' | 'quote' | 'earnVaults' 
     },
   },
   gasPrice: {
-    id: 'gmgn_gas_price',
+    id: 'sniper_gas',
     method: 'GET',
     path: '/api/v1/sniper/gas-price',
     priceUnits: usdcToUnits(0.05),

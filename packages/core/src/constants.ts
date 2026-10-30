@@ -1,3 +1,4 @@
+export const ENGINE_VERSION = '1.4.1';
 export const USDC_DECIMALS = 6;
 export const USDC_POLYGON = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
 export const USDC_SOLANA = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
@@ -11,7 +12,7 @@ export const SOLANA_CAIP_CHAIN_ID = 1151111101161;
 export const EVM_TX_HASH = /^0x[0-9a-fA-F]{64}$/;
 export const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 export const SOLANA_ADDRESS = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-export const SOLANA_SIGNATURE = /^[1-9A-HJ-NP-Za-km-z]{80,90}$/;
+export const SOLANA_SIGNATURE = /^[1-9A-HJ-NP-Za-km-z]{64,96}$/;
 
 export function usdcToUnits(usdc: number): number {
   return Math.round(usdc * 10 ** USDC_DECIMALS);

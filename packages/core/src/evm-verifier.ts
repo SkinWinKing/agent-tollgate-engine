@@ -60,6 +60,7 @@ export async function verifyEvmPayment(cfg: CoreConfig, chain: EvmChain, hash: s
   const settledAt = Number(BigInt(block.timestamp));
   if (Date.now() / 1000 - settledAt > cfg.maxAgeSec) return { ok: false, reason: 'PAYMENT_TOO_OLD', retryable: false };
 
+  if (received > BigInt(Number.MAX_SAFE_INTEGER)) return { ok: false, reason: 'AMOUNT_OVERFLOW', retryable: false };
   return {
     ok: true,
     payment: { network: chain.network, reference: hash.toLowerCase(), payer: receipt.from, amountUnits: Number(received), settledAt },

@@ -16,7 +16,11 @@ async function getCached<T>(url: string, ttlMs: number): Promise<T> {
   if (!res.ok) throw new Error(`Upstream HTTP ${res.status}`);
   const value = (await res.json()) as T;
   memo.set(url, { exp: Date.now() + ttlMs, value });
-  if (memo.size > 300) for (const [k, v] of memo) if (v.exp < Date.now()) memo.delete(k);
+  if (memo.size > 300) {
+    const now = Date.now();
+    for (const [k, v] of memo) if (v.exp < now) memo.delete(k);
+    if (memo.size > 500) { const oldest = [...memo.entries()].sort((a, b) => a[1].exp - b[1].exp); for (let i = 0; i < oldest.length - 300; i++) memo.delete(oldest[i]![0]); }
+  }
   return value;
 }
 

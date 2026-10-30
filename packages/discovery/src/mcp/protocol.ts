@@ -1,4 +1,4 @@
-import { ALL_ROUTES } from '@tollgate/core';
+import { ALL_ROUTES, ENGINE_VERSION } from '@tollgate/core';
 import { planTask, WORKFLOWS, workflowPlan } from './planner';
 import { callTool, TOOLS, type Dispatch } from './tools';
 
@@ -44,7 +44,7 @@ export async function handleRpc(msg: RpcRequest, dispatch: Dispatch): Promise<Rp
       return ok({
         protocolVersion: PROTOCOL_VERSION,
         capabilities: { tools: { listChanged: false }, prompts: { listChanged: false }, resources: { listChanged: false } },
-        serverInfo: { name: 'agent-tollgate-engine', title: 'Agent Tollgate', version: '1.4.0' },
+        serverInfo: { name: 'agent-tollgate-engine', title: 'Agent Tollgate', version: ENGINE_VERSION },
         instructions: `${ALL_ROUTES.length} pay-per-call tools (x402, USDC). Call plan_task (free) with your goal to get the right workflow, use prompts/get for multi-step workflows, then call tools; paid tools answer with payment instructions first.`,
       });
     case 'ping':
@@ -79,6 +79,9 @@ export async function handleRpc(msg: RpcRequest, dispatch: Dispatch): Promise<Rp
       const body = await (await dispatch(res.path, { headers: { accept: res.mimeType } })).text();
       return ok({ contents: [{ uri: res.uri, mimeType: res.mimeType, text: body }] });
     }
+    case 'notifications/initialized':
+    case 'notifications/cancelled':
+      return null;
     default:
       return fail(-32601, `Method not found: ${msg.method}`);
   }

@@ -1,4 +1,4 @@
-import { ALL_ROUTES, unitsToUsdc, type RouteSpec } from '@tollgate/core';
+import { ALL_ROUTES, ENGINE_VERSION, unitsToUsdc, type RouteSpec } from '@tollgate/core';
 import type { DiscoveryContext } from './context';
 
 function operation(ctx: DiscoveryContext, r: RouteSpec): Record<string, unknown> {
@@ -50,7 +50,7 @@ export function openApiSpec(ctx: DiscoveryContext): Record<string, unknown> {
     openapi: '3.1.0',
     info: {
       title: 'Agent Tollgate Engine',
-      version: '1.0.0',
+      version: ENGINE_VERSION,
       description: `${ALL_ROUTES.length} pay-per-call tools for agents over x402 (USDC on Base, Polygon, Solana): crypto market data, token audits, indicators, swap routing, web extraction, DNS/WHOIS/email checks, FX, weather and AI text/image tools.`,
       contact: { name: 'Agent Tollgate', email: 'support@skinwinking.com', url: 'https://github.com/SkinWinKing/agent-tollgate-engine' },
       'x-guidance':

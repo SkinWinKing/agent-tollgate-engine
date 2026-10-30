@@ -37,7 +37,8 @@ async function activeFacilitator(cfg: CoreConfig): Promise<{ url: string; feePay
       continue;
     }
   }
-  return active;
+  active = null;
+  return null;
 }
 
 export async function facilitatorSolanaFeePayer(cfg: CoreConfig): Promise<string | null> {

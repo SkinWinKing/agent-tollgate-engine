@@ -166,6 +166,7 @@ app.get('/.well-known/security.txt', (c) => {
 });
 app.get('/security.txt', (c) => c.redirect('/.well-known/security.txt', 301));
 app.get('/.well-known/agent.json', (c) => c.redirect('/.well-known/agent-card.json', 301));
+app.get('/.well-known/mcptry-verify.txt', (c) => new Response('mcptry-verify=qgY-BF-cVVLhadpHaZL8SSll5q3msH4P\n', { headers: { 'content-type': 'text/plain' } }));
 
 app.get('/mcp', (c) => c.body(null, 405, { Allow: 'POST' }));
 
@@ -226,9 +227,17 @@ app.onError((err, c) => {
 
 /** Nightly copy of the D1 sales ledger to R2, so paid-call history survives any database mishap. */
 async function backupSales(env: AppEnv['Bindings']) {
-  const rows = await env.SALES.prepare('SELECT * FROM sales ORDER BY id').all();
+  const PAGE = 5000;
+  const all: unknown[] = [];
+  let lastId = 0;
+  for (;;) {
+    const page = await env.SALES.prepare('SELECT * FROM sales WHERE id > ? ORDER BY id LIMIT ?').bind(lastId, PAGE).all();
+    all.push(...page.results);
+    if (page.results.length < PAGE) break;
+    lastId = (page.results.at(-1) as { id: number }).id;
+  }
   const day = new Date().toISOString().slice(0, 10);
-  await env.BACKUPS.put(`sales/${day}.json`, JSON.stringify({ exportedAt: new Date().toISOString(), rows: rows.results }), { httpMetadata: { contentType: 'application/json' } });
+  await env.BACKUPS.put(`sales/${day}.json`, JSON.stringify({ exportedAt: new Date().toISOString(), rows: all }), { httpMetadata: { contentType: 'application/json' } });
 }
 
 export default {

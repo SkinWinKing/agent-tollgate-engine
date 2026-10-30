@@ -1,5 +1,7 @@
 # agent-tollgate-engine
 
+[![mcptry](https://mcptry.com/badge/com.skinwinking/agent-tollgate)](https://mcptry.com/servers/com.skinwinking/agent-tollgate)
+
 Live at **https://skinwinking.com**. Machine-readable: [`/llms.txt`](https://skinwinking.com/llms.txt), [`/openapi.json`](https://skinwinking.com/openapi.json), MCP at `https://skinwinking.com/mcp`.
 
 Pay-per-call trading intelligence and fee-bearing swap routing for autonomous agents, on Cloudflare Workers.
