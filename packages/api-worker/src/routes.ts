@@ -7,6 +7,7 @@ import { auditSolanaToken, AuditError } from './services/audit-solana';
 import { DATA_HANDLERS, DataError } from './services/data-tools';
 import { BATCH2_HANDLERS } from './services/batch2-tools';
 import { COUNCIL_HANDLERS } from './services/council-tools';
+import { SIGNAL_HANDLERS } from './services/signal-engine';
 import { MORE_HANDLERS } from './services/more-tools';
 import { UTIL_HANDLERS } from './services/util-tools';
 import { orderbookImbalance, OrderbookError } from './services/orderbook';
@@ -53,7 +54,7 @@ routes.use(ROUTES.quote.path, async (c, next) => {
   await next();
 });
 
-export const TOOL_HANDLERS = { ...DATA_HANDLERS, ...UTIL_HANDLERS, ...MORE_HANDLERS, ...COUNCIL_HANDLERS, ...BATCH2_HANDLERS };
+export const TOOL_HANDLERS = { ...DATA_HANDLERS, ...UTIL_HANDLERS, ...MORE_HANDLERS, ...COUNCIL_HANDLERS, ...BATCH2_HANDLERS, ...SIGNAL_HANDLERS };
 
 for (const route of [...DATA_ROUTES, ...UTIL_ROUTES, ...BATCH2_ROUTES]) {
   const handler = TOOL_HANDLERS[route.id]!;

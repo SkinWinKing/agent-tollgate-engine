@@ -204,6 +204,20 @@ export const UTIL_ROUTES: RouteSpec[] = [
     'Live planetary Kp index with the NOAA storm scale (G1-G5) and real-time solar wind speed and density.',
     {}, [], {}, { kp: 1, storm: 'none', solarWind: { speedKmS: 380 } }),
 
+  // ---- Signal Engine ------------------------------------------------------
+  tool('composite_signal', 'GET', 'signal/composite', 0.02, 'Composite buy/sell signal combining council, TA, funding, sentiment and hype',
+    'Aggregates council_verdict (7-agent consensus), technical_indicators (RSI/MACD/BB), funding_rates, fear_greed and hype_signal into a single -100 to +100 score with a strong_buy/buy/neutral/sell/strong_sell classification. Includes Kelly-sized position when bankroll is given, entry/stop/target levels and warnings.',
+    { chain: str('solana, ethereum, base, polygon, arbitrum or bsc'), address: str('Token mint or contract address'), bankroll: { type: 'number', description: 'Optional portfolio size for Kelly sizing' } },
+    ['chain', 'address'],
+    { chain: 'solana', address: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN' },
+    { signal: 'buy', score: 32.5, confidence: 0.78, components: [], sizing: null }),
+  tool('signal_scanner', 'GET', 'signal/scanner', 0.05, 'Scan trending tokens and rank by composite signal strength',
+    'Fetches trending tokens (GMGN sniper data), filters honeypots and rugs, runs composite_signal on each, and returns ranked results by signal score. Use this to discover the best current opportunities.',
+    { chain: str('solana, ethereum or base', { default: 'solana' }), limit: { type: 'integer', minimum: 1, maximum: 20, default: 10 }, minScore: { type: 'number', default: 0, description: 'Minimum composite score to include' } },
+    [],
+    { chain: 'solana', limit: 5 },
+    { chain: 'solana', scanned: 20, results: [{ signal: 'buy', score: 45.2, token: { symbol: 'XYZ' } }] }),
+
   // ---- AI (Workers AI) ----------------------------------------------------
   tool('ai_summarize', 'POST', 'ai/summarize', 0.01, 'Summarize text into a short summary and key points',
     'LLM summary of long text: a concise summary in the requested length and language plus bullet key points.',
